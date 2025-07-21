@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { AuthLayout } from "@/components/AuthLayout";
-import { DashboardLayout } from "@/components/DashboardLayout";
-import { DashboardHome } from "@/components/DashboardHome";
-import { ProductUpload } from "@/components/ProductUpload";
-import { MyProducts } from "@/components/MyProducts";
-import { Profile } from "@/components/Profile";
+import { AuthLayout } from "@/components/AdminComponents/AuthLayout";
+import { DashboardLayout } from "@/components/AdminComponents/DashboardLayout";
+import { DashboardHome } from "@/components/AdminComponents/DashboardHome";
+import { ProductUpload } from "@/components/AdminComponents/ProductUpload";
+import { MyProducts } from "@/components/AdminComponents/MyProducts";
+import { Profile } from "@/components/AdminComponents/Profile";
 
 const Index = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
