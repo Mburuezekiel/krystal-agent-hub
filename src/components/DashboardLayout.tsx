@@ -52,7 +52,7 @@ export const DashboardLayout = ({
   };
 
   return (
-    <div className="min-h-screen bg-muted/50">
+    <div className="min-h-screen bg-muted/50 flex"> {/* Added flex to enable side-by-side layout more easily */}
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
@@ -63,10 +63,10 @@ export const DashboardLayout = ({
 
       {/* Sidebar */}
       <div className={`
-        fixed inset-y-0 left-0 z-50 w-64 bg-card shadow-elegant transform transition-transform duration-300 ease-in-out
+        fixed inset-y-0 left-0 z-50 bg-card shadow-elegant transform transition-transform duration-300 ease-in-out
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-        lg:translate-x-0 lg:static lg:inset-0
-      `}>
+        lg:translate-x-0 lg:static lg:inset-0 lg:w-64 xl:w-72 
+      `}> {/* Increased width for extra large screens */}
         <div className="flex flex-col h-full">
           {/* Logo */}
           <div className="flex items-center justify-between h-16 px-6 border-b">
@@ -97,7 +97,7 @@ export const DashboardLayout = ({
                   className={`w-full justify-start ${
                     isActive 
                       ? "bg-gradient-primary text-primary-foreground" 
-                      : "hover:bg-muted"
+                      : "hover:bg-gradient-primary "
                   }`}
                   onClick={() => {
                     onPageChange(item.page);
@@ -130,10 +130,10 @@ export const DashboardLayout = ({
       </div>
 
       {/* Main content */}
-      <div className="lg:pl-64">
+      <div className="flex-1 flex flex-col"> {/* Added flex-1 and flex-col for main content area */}
         {/* Top bar */}
         <header className="bg-card border-b shadow-sm">
-          <div className="flex items-center justify-between h-16 px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8"> {/* Adjusted padding for larger screens */}
             <div className="flex items-center space-x-4">
               <Button
                 variant="ghost"
@@ -195,7 +195,7 @@ export const DashboardLayout = ({
         </header>
 
         {/* Page content */}
-        <main className="p-4 sm:p-6">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full"> {/* Added max-w-7xl mx-auto to constrain content width and center it on large screens */}
           {children}
         </main>
       </div>

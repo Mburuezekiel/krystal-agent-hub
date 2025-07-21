@@ -31,46 +31,46 @@ export const MyProducts = () => {
       id: 1,
       name: "iPhone 14 Pro Max 256GB",
       category: "Electronics",
-      price: "₦850,000",
+      price: "KES 850,000",
       status: "approved",
       views: 124,
       inquiries: 8,
       addedDate: "2024-01-15",
       image: "https://images.unsplash.com/photo-1592750475338-74b7b21085ab?w=300&h=300&fit=crop",
       condition: "new",
-      location: "Lagos"
+      location: "Kenya "
     },
     {
       id: 2,
       name: "Nike Air Force 1 White",
       category: "Fashion",
-      price: "₦45,000",
+      price: "KES 45,000",
       status: "pending",
       views: 67,
       inquiries: 3,
       addedDate: "2024-01-14",
       image: "https://images.unsplash.com/photo-1549298916-b41d501d3772?w=300&h=300&fit=crop",
       condition: "new",
-      location: "Abuja"
+      location: "Kenya "
     },
     {
       id: 3,
       name: "MacBook Pro M3 16-inch",
       category: "Electronics",
-      price: "₦1,200,000",
+      price: "KES 1,200,000",
       status: "approved",
       views: 89,
       inquiries: 12,
       addedDate: "2024-01-13",
       image: "https://images.unsplash.com/photo-1541807084-5c52b6b3adef?w=300&h=300&fit=crop",
       condition: "used-like-new",
-      location: "Lagos"
+      location: "Kenya"
     },
     {
       id: 4,
       name: "Gaming Chair RGB",
       category: "Furniture",
-      price: "₦78,000",
+      price: "KES 78,000",
       status: "rejected",
       views: 23,
       inquiries: 1,
@@ -84,27 +84,27 @@ export const MyProducts = () => {
       id: 5,
       name: "Sony WH-1000XM4 Headphones",
       category: "Electronics",
-      price: "₦95,000",
+      price: "KES 95,000",
       status: "approved",
       views: 156,
       inquiries: 15,
       addedDate: "2024-01-11",
       image: "https://images.unsplash.com/photo-1583394838336-acd977736f90?w=300&h=300&fit=crop",
       condition: "used-like-new",
-      location: "Lagos"
+      location: "Kenya"
     },
     {
       id: 6,
       name: "Samsung Galaxy S24 Ultra",
       category: "Electronics",
-      price: "₦750,000",
+      price: "KES 750,000",
       status: "draft",
       views: 0,
       inquiries: 0,
       addedDate: "2024-01-10",
       image: "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf?w=300&h=300&fit=crop",
       condition: "new",
-      location: "Abuja"
+      location: "Kenya"
     }
   ];
 
@@ -270,7 +270,7 @@ export const MyProducts = () => {
                       
                       <div className="flex items-center justify-between">
                         <span className="text-lg font-bold text-primary">{product.price}</span>
-                        <span className="text-sm text-muted-foreground">{product.location}</span>
+                        {/* <span className="text-sm text-muted-foreground">{product.location}</span> */}
                       </div>
                       
                       <div className="grid grid-cols-2 gap-4 text-sm">

@@ -57,37 +57,37 @@ export const DashboardHome = ({ onPageChange }: DashboardHomeProps) => {
       id: 1,
       name: "iPhone 14 Pro Max",
       category: "Electronics",
-      price: "₦850,000",
+      price: "KES 105,000",
       status: "approved",
       views: 124,
-      addedDate: "2024-01-15"
+      addedDate: "2025-05-15"
     },
     {
       id: 2,
       name: "Nike Air Force 1",
       category: "Fashion",
-      price: "₦45,000",
+      price: "KES 45,000",
       status: "pending",
       views: 67,
-      addedDate: "2024-01-14"
+      addedDate: "2025-04-14"
     },
     {
       id: 3,
       name: "MacBook Pro M3",
       category: "Electronics",
-      price: "₦1,200,000",
+      price: "KES 120,000",
       status: "approved",
       views: 89,
-      addedDate: "2024-01-13"
+      addedDate: "2025-03-13"
     },
     {
       id: 4,
       name: "Gaming Chair",
       category: "Furniture",
-      price: "₦78,000",
+      price: "KES 8,000",
       status: "rejected",
       views: 23,
-      addedDate: "2024-01-12"
+      addedDate: "2025-02-12"
     }
   ];
 
