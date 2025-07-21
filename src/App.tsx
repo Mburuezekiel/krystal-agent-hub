@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import  AgentDash from "./pages/Admin/Index";
+import Home from "./pages/landing/Index"
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -15,7 +16,8 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          
+
+           <Route path="/" element={<Home />} />
           <Route path="/agent/dashboard" element={<AgentDash />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
