@@ -1,8 +1,9 @@
+// src/components/layout/Header.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirects
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Heart, User, Search, Menu, X, Phone, Mail, Instagram, Facebook, LogIn, LogOut, Package, UserCircle, Music2Icon } from 'lucide-react';
+import { ShoppingCart, Heart, User, Search, Menu, X, Phone, Mail, Instagram, Facebook, LogIn, LogOut, Package, UserCircle, Music2Icon } from 'lucide-react'; // Music2Icon is now imported directly
 import {
   Sheet,
   SheetContent,
@@ -21,43 +22,54 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ALL_CATEGORIES } from '@/services/product-service';
 
-const TikTokIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    viewBox="0 0 24 24"
-    fill="currentColor"
-    {...props}
-  >
-    <path d="M12.525 1.516a11.956 11.956 0 0 1 7.849 7.653c.706 3.03-.047 5.965-2.005 8.614-1.347 1.877-3.116 3.48-5.18 4.074v-3.816c1.163-.114 2.23-.527 3.146-1.178.879-.625 1.564-1.424 2.015-2.31a6.004 6.004 0 0 0 .193-3.567c-.244-1.109-.835-2.126-1.688-2.946-.853-.82-1.87-1.41-2.979-1.654a6.004 6.004 0 0 0-3.567.193c-.886.45-1.685 1.135-2.31 2.015-.625.879-1.038 1.946-1.152 3.109v4.067c-2.064-.594-3.833-2.2-5.18-4.074-1.958-2.649-2.711-5.584-2.005-8.614a11.956 11.956 0 0 1 7.849-7.653z"/>
-  </svg>
-);
-
+// Removed custom TikTokIcon as Music2Icon is now used for it.
 
 const Header: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(true);
-  const [userName, setUserName] = React.useState("Jane Doe");
+  const [isLoggedIn, setIsLoggedIn] = React.useState(false); // Default to false, will be set from localStorage
+  const [userName, setUserName] = React.useState(""); // Default to empty, will be set from localStorage
+  const navigate = useNavigate(); // Hook for navigation
 
+  // Fetch auth state from localStorage on mount
+  React.useEffect(() => {
+    const token = localStorage.getItem('userToken');
+    const storedUserName = localStorage.getItem('userName');
+    if (token && storedUserName) {
+      setIsLoggedIn(true);
+      setUserName(storedUserName);
+    } else {
+      setIsLoggedIn(false);
+      setUserName("");
+    }
+  }, []); // Empty dependency array means this runs once on mount
+
+  // Filter out "New In" and "Sale" as they have dedicated sections/routes
   const mainCategories = ALL_CATEGORIES.filter(
     (cat) => cat !== "New In" && cat !== "Sale"
   );
 
+  // Function to close the sheet
   const closeSheet = () => setIsSheetOpen(false);
 
   const handleLogout = () => {
-    setIsLoggedIn(false);
-    setUserName("");
-    closeSheet();
+    localStorage.removeItem('userToken'); // Remove token from localStorage
+    localStorage.removeItem('userName'); // Remove user name from localStorage
+    setIsLoggedIn(false); // Update local state
+    setUserName(""); // Update local state
+    closeSheet(); // Close the mobile sheet if open
+    navigate('/login'); // Redirect to login page
   };
 
   const handleLoginRedirect = () => {
-    closeSheet();
-    alert("Redirecting to login page...");
+    closeSheet(); // Close the mobile sheet if open
+    navigate('/login'); // Redirect to login page
   };
 
   return (
     <header className="w-full sticky top-0 z-50">
-      <div className="hidden sm:flex bg-[#F8F8F8] text-[#222222] text-xs py-2 px-4 flex-col sm:flex-row items-center justify-between gap-2 border-b border-gray-200">
+      {/* Top Contact & Socials Bar - Hidden on small screens (md:flex means visible from md breakpoint up) */}
+      <div className="hidden md:flex bg-[#F8F8F8] text-[#222222] text-xs py-2 px-4 items-center justify-between gap-2 border-b border-gray-200">
+        {/* Left Section: Contact Details */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Phone className="h-3 w-3 text-[#D81E05]" />
@@ -73,6 +85,7 @@ const Header: React.FC = () => {
           </div>
         </div>
 
+        {/* Right Section: Social Icons */}
         <div className="flex items-center gap-3">
           <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-[#222222] hover:text-[#D81E05] transition-colors">
             <Facebook className="h-4 w-4" />
@@ -81,14 +94,14 @@ const Header: React.FC = () => {
             <Instagram className="h-4 w-4" />
           </a>
           <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#222222] hover:text-[#D81E05] transition-colors">
-            <Music2Icon className="h-4 w-4" />
+            <Music2Icon className="h-4 w-4" /> {/* Changed from TikTokIcon to Music2Icon */}
           </a>
         </div>
       </div>
-
-
+      {/* Main Header */}
       <div className="bg-[#D81E05] shadow-md border-b border-[#A01A04]">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
+          {/* Mobile Menu Toggle (Sheet Trigger) - Visible only on small screens */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden text-white hover:bg-[#A01A04]">
@@ -104,6 +117,7 @@ const Header: React.FC = () => {
                 </SheetDescription>
               </SheetHeader>
               <div className="pt-4 pb-6 overflow-y-auto flex-grow">
+                {/* Mobile Search Bar */}
                 <div className="relative mb-6">
                   <Input
                     type="search"
@@ -113,10 +127,12 @@ const Header: React.FC = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 </div>
 
+                {/* Mobile Navigation Links */}
                 <nav className="flex flex-col gap-4 text-lg font-medium">
                   <Link to="/new-in" onClick={closeSheet} className="block py-2 hover:text-[#D81E05] transition-colors">New In</Link>
                   <Link to="/sale" onClick={closeSheet} className="block py-2 font-bold text-[#D81E05] hover:text-[#222222] transition-colors">Sale</Link>
 
+                  {/* Mobile Categories (consistent 2 columns) */}
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <h3 className="text-gray-500 text-sm uppercase mb-2">Shop by Category</h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -133,13 +149,16 @@ const Header: React.FC = () => {
                 </nav>
               </div>
 
+              {/* Mobile Action Icons (Cart & Profile only) */}
               <div className="mt-auto pt-6 border-t border-gray-200 flex justify-around items-center">
+                {/* Cart always visible */}
                 <Button variant="ghost" size="icon" className="text-[#222222] hover:bg-gray-100" asChild>
                   <Link to="/cart" onClick={closeSheet}>
                     <ShoppingCart className="h-6 w-6" />
                     <span className="sr-only">Cart</span>
                   </Link>
                 </Button>
+                {/* Profile dropdown for mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-[#222222] hover:bg-gray-100">
@@ -162,7 +181,7 @@ const Header: React.FC = () => {
                             <Package className="h-4 w-4" /> Orders
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
+                        <DropdownMenuItem asChild> {/* Wishlist for mobile profile dropdown */}
                           <Link to="/wishlist" onClick={closeSheet} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                             <Heart className="h-4 w-4" /> Wishlist
                           </Link>
@@ -183,11 +202,14 @@ const Header: React.FC = () => {
             </SheetContent>
           </Sheet>
 
-          <Link to="/" className="flex flex-col items-center flex-shrink-0 lg:flex-row">
+          {/* Logo */}
+          {/* On small screens, logo is between menu toggle and action icons */}
+          <Link to="/" className="flex flex-col items-center flex-grow flex-shrink-0 lg:flex-row lg:flex-grow-0">
             <span className="font-extrabold text-2xl sm:text-3xl lg:text-3xl text-white tracking-wider leading-none">KRYSTAL</span>
             <span className="font-normal text-xs sm:text-sm lg:text-base text-white -mt-1 lg:ml-1 lg:mt-0 font-serif">STORE</span>
           </Link>
 
+          {/* Search Bar (Desktop) - Hidden on mobile */}
           <div className="flex-grow max-w-xl hidden lg:block relative">
             <Input
               type="search"
@@ -197,10 +219,12 @@ const Header: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 h-5 w-5" />
           </div>
 
+          {/* Navigation Links (Desktop) - Hidden on mobile */}
           <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
             <Link to="/new-in" className="text-white hover:text-[#FFD700] transition-colors">New In</Link>
             <Link to="/sale" className="font-bold text-[#FFD700] hover:text-white transition-colors">Sale</Link>
 
+            {/* Categories Mega Menu (Desktop) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <span className="text-white cursor-pointer hover:text-[#FFD700] transition-colors flex items-center gap-1">
@@ -225,8 +249,15 @@ const Header: React.FC = () => {
             <Link to="/contact" className="text-white hover:text-[#FFD700] transition-colors">Contact</Link>
           </nav>
 
+          {/* Action Icons (Desktop & Mobile) */}
           <div className="flex items-center gap-2 md:gap-4">
-            
+            {/* Search Icon (Desktop only) */}
+            <Button variant="ghost" size="icon" className="hidden lg:flex text-white hover:bg-[#A01A04]">
+              <Search className="h-5 w-5" />
+              <span className="sr-only">Search</span>
+            </Button>
+
+            {/* Wishlist Icon (Desktop only) */}
             <Button variant="ghost" size="icon" className="hidden lg:flex text-white hover:bg-[#A01A04]" asChild>
               <Link to="/wishlist">
                 <Heart className="h-5 w-5" />
@@ -234,6 +265,7 @@ const Header: React.FC = () => {
               </Link>
             </Button>
 
+            {/* Cart Icon (Always visible) */}
             <Button variant="ghost" size="icon" className="text-white hover:bg-[#A01A04]" asChild>
               <Link to="/cart">
                 <ShoppingCart className="h-5 w-5" />
@@ -241,6 +273,7 @@ const Header: React.FC = () => {
               </Link>
             </Button>
 
+            {/* User/Profile Icon with Dropdown (Always visible) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-[#A01A04]">
@@ -263,7 +296,7 @@ const Header: React.FC = () => {
                         <Package className="h-4 w-4" /> Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="lg:hidden">
+                    <DropdownMenuItem asChild className="lg:hidden"> {/* Wishlist for mobile profile dropdown */}
                       <Link to="/wishlist" className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                         <Heart className="h-4 w-4" /> Wishlist
                       </Link>

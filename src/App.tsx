@@ -14,7 +14,10 @@ import HomePage from "./pages/landing/Index"; // Corrected path for HomePage
 
 // Admin Page (from your existing code)
 import AgentDash from "./pages/Admin/Index";
-
+// auth 
+import Login from "./pages/Auth/Login";
+import Register from "./pages/Auth/Register";
+import ForgotPassword from "./pages/Auth/ForgotPassward";
 // Placeholder Pages (newly added)
 import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CategoryPage from "./pages/Product/CategoryPage";
@@ -45,6 +48,13 @@ const App = () => (
         <Header/>
         <Routes>
           <Route path="/" element={<HomePage/>} />
+
+          {/* AuthRoutes  */}
+           <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+             <Route path="/forgot-password" element={<ForgotPassword />} />
+
+
           <Route path="/agent/dashboard" element={<AgentDash />} />
 
           {/* E-commerce Specific Pages */}
