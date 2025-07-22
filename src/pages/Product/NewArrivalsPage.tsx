@@ -134,103 +134,106 @@ const NewArrivalsPage: React.FC = () => {
         <aside
           className={`w-full md:w-64 bg-white p-6 rounded-lg shadow-md ${
             isFilterSidebarOpen ? 'block' : 'hidden'
-          } md:block`} // Show/hide based on state for mobile, always show on desktop
+          } md:block`}
         >
-          <h2 className="text-xl font-semibold mb-6  text-orange-500">Filters</h2>
+          <h2 className="text-xl font-semibold mb-6 text-orange-500">Filters</h2>
 
-          {/* Category Filter */}
-          <div className=" mb-6">
-            <h3 className="font-medium text-lg mb-3  text-orange-500">Category</h3>
-            <ul className="space-y-2">
-              {categories.map(category => (
-                <li key={category}>
-                  <button
-                    onClick={() => setSelectedCategory(category)}
-                    className={`text-left w-full py-1 ${
-                      selectedCategory === category
-                        ? 'text-[#D81E05] font-semibold'
-                        : 'text-gray-700 hover:text-[#D81E05]'
-                    }`}
-                  >
-                    {category}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* New wrapper for filter sections to control 2-column layout on small screens */}
+          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-1 gap-x-4 gap-y-6">
+            {/* Category Filter */}
+            <div> {/* Each filter section is now wrapped in a div */}
+              <h3 className="font-medium text-lg mb-3 text-orange-500">Category</h3>
+              <ul className="space-y-2">
+                {categories.map(category => (
+                  <li key={category}>
+                    <button
+                      onClick={() => setSelectedCategory(category)}
+                      className={`text-left w-full py-1 ${
+                        selectedCategory === category
+                          ? 'text-[#D81E05] font-semibold'
+                          : 'text-gray-700 hover:text-[#D81E05]'
+                      }`}
+                    >
+                      {category}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Price Range Filter */}
-          <div className="mb-6">
-            <h3 className="font-medium text-lg mb-3  text-orange-500">Price Range</h3>
-            <ul className="space-y-2">
-              {PRICE_RANGES.map((range) => (
-                <li key={range.label}>
-                  <button
-                    onClick={() => setSelectedPriceRange(range)}
-                    className={`text-left w-full py-1 ${
-                      selectedPriceRange.label === range.label
-                        ? 'text-[#D81E05] font-semibold'
-                        : 'text-gray-700 hover:text-[#D81E05]'
-                    }`}
-                  >
-                    {range.label}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Price Range Filter */}
+            <div>
+              <h3 className="font-medium text-lg mb-3 text-orange-500">Price Range</h3>
+              <ul className="space-y-2">
+                {PRICE_RANGES.map((range) => (
+                  <li key={range.label}>
+                    <button
+                      onClick={() => setSelectedPriceRange(range)}
+                      className={`text-left w-full py-1 ${
+                        selectedPriceRange.label === range.label
+                          ? 'text-[#D81E05] font-semibold'
+                          : 'text-gray-700 hover:text-[#D81E05]'
+                      }`}
+                    >
+                      {range.label}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Brand Filter */}
-          <div className="mb-6">
-            <h3 className="font-medium text-lg mb-3 text-orange-500">Brand</h3>
-            <ul className="space-y-2">
-              {brands.map(brand => (
-                <li key={brand}>
-                  <button
-                    onClick={() => setSelectedBrand(brand)}
-                    className={`text-left w-full py-1 ${
-                      selectedBrand === brand
-                        ? 'text-[#D81E05] font-semibold'
-                        : 'text-gray-700 hover:text-[#D81E05]'
-                    }`}
-                  >
-                    {brand}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Brand Filter */}
+            <div>
+              <h3 className="font-medium text-lg mb-3 text-orange-500">Brand</h3>
+              <ul className="space-y-2">
+                {brands.map(brand => (
+                  <li key={brand}>
+                    <button
+                      onClick={() => setSelectedBrand(brand)}
+                      className={`text-left w-full py-1 ${
+                        selectedBrand === brand
+                          ? 'text-[#D81E05] font-semibold'
+                          : 'text-gray-700 hover:text-[#D81E05]'
+                      }`}
+                    >
+                      {brand}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Customer Reviews Filter */}
-          <div className="mb-6">
-            <h3 className="font-medium text-lg mb-3">Customer Reviews</h3>
-            <ul className="space-y-2">
-              {REVIEW_RATINGS.map((ratingOption) => (
-                <li key={ratingOption.label}>
-                  <button
-                    onClick={() => setSelectedRating(ratingOption)}
-                    className={`flex items-center text-left w-full py-1 ${
-                      selectedRating.label === ratingOption.label
-                        ? 'text-[#D81E05] font-semibold'
-                        : 'text-gray-700 hover:text-[#D81E05]'
-                    }`}
-                  >
-                    {ratingOption.minRating > 0 && (
-                      <span className="flex mr-1">
-                        {Array.from({ length: ratingOption.minRating }).map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                        {ratingOption.minRating < 5 && (
-                            <span className="text-gray-500 ml-1">& Up</span>
-                        )}
-                      </span>
-                    )}
-                    {ratingOption.label === 'All Ratings' ? 'All Ratings' : null}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
+            {/* Customer Reviews Filter */}
+            <div>
+              <h3 className="font-medium text-lg mb-3 text-orange-500">Customer Reviews</h3> {/* Added orange-500 here too */}
+              <ul className="space-y-2">
+                {REVIEW_RATINGS.map((ratingOption) => (
+                  <li key={ratingOption.label}>
+                    <button
+                      onClick={() => setSelectedRating(ratingOption)}
+                      className={`flex items-center text-left w-full py-1 ${
+                        selectedRating.label === ratingOption.label
+                          ? 'text-[#D81E05] font-semibold'
+                          : 'text-gray-700 hover:text-[#D81E05]'
+                      }`}
+                    >
+                      {ratingOption.minRating > 0 && (
+                        <span className="flex mr-1">
+                          {Array.from({ length: ratingOption.minRating }).map((_, i) => (
+                            <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                          ))}
+                          {ratingOption.minRating < 5 && (
+                              <span className="text-gray-500 ml-1">& Up</span>
+                          )}
+                        </span>
+                      )}
+                      {ratingOption.label === 'All Ratings' ? 'All Ratings' : null}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div> {/* End of new wrapper div */}
         </aside>
 
         {/* Product Display Area */}
