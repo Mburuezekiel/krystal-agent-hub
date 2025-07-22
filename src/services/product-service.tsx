@@ -53,7 +53,7 @@ export const ALL_CATEGORIES = [
 const DUMMY_PRODUCTS: Product[] = [
   // Women Clothing (Category: Women Clothing) - 3+ items
   {
-    id: 'p1', name: 'Elegant Red Maxi Dress', price: 4500, oldPrice: 5000,
+    id: 'p1', name: ' Red Maxi Dress', price: 4500, oldPrice: 5000,
     imageUrl: 'https://placehold.co/400x500/D81E05/FFFFFF?text=Red+Maxi+Dress', category: 'Women Clothing', isNew: true,
     description: 'A stunning elegant red maxi dress perfect for evening events and special occasions. Made from high-quality, breathable fabric for ultimate comfort and style.',
     brand: 'Fashionista', stock: 15, rating: 4.7, numReviews: 120,
@@ -170,7 +170,7 @@ const DUMMY_PRODUCTS: Product[] = [
 
   // Kids (Category: Kids) - 3+ items
   {
-    id: 'p7', name: 'Kids Dino T-Shirt', price: 950,
+    id: 'p7', name: 'Kids Dino T-Shirt', price: 950,oldPrice: 1000,
     imageUrl: 'https://placehold.co/400x500/D81E05/FFFFFF?text=Dino+T-Shirt', category: 'Kids', isNew: true,
     description: 'Fun and colorful dino print t-shirt for kids. Made from soft, comfortable cotton for active play.',
     brand: 'PlayWear', stock: 60, rating: 4.8, numReviews: 250,
@@ -240,7 +240,7 @@ const DUMMY_PRODUCTS: Product[] = [
 
   // Home & Kitchen (Category: Home & Kitchen) - 3+ items
   {
-    id: 'p11', name: 'Smart Coffee Maker', price: 8900,
+    id: 'p11', name: 'Smart Coffee Maker', price: 8900,oldPrice: 9999,
     imageUrl: 'https://placehold.co/400x500/D81E05/FFFFFF?text=Coffee+Maker', category: 'Home & Kitchen', isNew: true,
     description: 'Programmable smart coffee maker with various brewing options. Features a sleek design and easy-to-use controls.',
     brand: 'BrewMaster', stock: 12, rating: 4.9, numReviews: 300,
@@ -310,7 +310,7 @@ const DUMMY_PRODUCTS: Product[] = [
 
   // Sports & Outdoors (Category: Sports & Outdoors) - 3+ items
   {
-    id: 'p17', name: 'Yoga Mat with Carry Strap', price: 1900,
+    id: 'p17', name: 'Yoga Mat with Carry Strap', price: 1900,oldPrice: 2000,
     imageUrl: 'https://placehold.co/400x500/F8F8F8/222222?text=Yoga+Mat', category: 'Sports & Outdoors',isNew: true,
     description: 'Eco-friendly yoga mat with excellent grip and cushioning. Includes a convenient carry strap for portability.',
     brand: 'ZenFit', stock: 30, rating: 4.7, numReviews: 110,
