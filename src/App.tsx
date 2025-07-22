@@ -20,6 +20,8 @@ import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CategoryPage from "./pages/Product/CategoryPage";
 import NewArrivalsPage from "./pages/Product/NewArrivalsPage";
 import SalePage from "./pages/Product/SalePage";
+import CartPage from "./pages/Cart/CartPage";
+import CheckoutPage from "./pages/Cart/CheckoutPage";
 import ContactPage from "./pages/contact/ContactPage";
 import FAQPage from "./pages/faq/FAQPage";
 import ShippingPage from "./pages/shipping/ShippingPage";
@@ -29,6 +31,7 @@ import GiftCardsPage from "./pages/gifts/GiftCardsPage";
 import PrivacyPolicyPage from "./pages/policies/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/policies/TermsOfServicePage";
 import NotFoundPage from "./pages/NotFound"; // Corrected import for NotFound page
+
 
 const queryClient = new QueryClient();
 
@@ -49,6 +52,8 @@ const App = () => (
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/new-in" element={<NewArrivalsPage />} />
           <Route path="/sale" element={<SalePage />} />
+           <Route path="/cart" element={<CartPage />} />       
+          <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
           <Route path="/shipping" element={<ShippingPage />} />
