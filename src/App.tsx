@@ -23,6 +23,7 @@ import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CategoryPage from "./pages/Product/CategoryPage";
 import NewArrivalsPage from "./pages/Product/NewArrivalsPage";
 import SalePage from "./pages/Product/SalePage";
+import WishlistPage from './pages/Product/WishlistPage'
 import CartPage from "./pages/Cart/CartPage";
 import CheckoutPage from "./pages/Cart/CheckoutPage";
 import ContactPage from "./pages/contact/ContactPage";
@@ -62,6 +63,7 @@ const App = () => (
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/new-in" element={<NewArrivalsPage />} />
           <Route path="/sale" element={<SalePage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
            <Route path="/cart" element={<CartPage />} />       
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/contact" element={<ContactPage />} />

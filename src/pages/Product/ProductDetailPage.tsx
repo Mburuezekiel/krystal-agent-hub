@@ -11,14 +11,25 @@ import { Heart, Share2 } from 'lucide-react';
 // Extend Product interface for more details (assuming product-service provides these)
 interface DetailedProduct extends Product {
   description: string;
-  brand?: string;
-  stock?: number; // Quantity in stock
-  rating?: number; // Average rating (e.g., 4.5)
-  numReviews?: number; // Number of reviews
-  images?: string[]; // Array of image URLs for gallery
-  specifications?: { [key: string]: string }; // Key-value pairs for specs
+  brand: string; // Made mandatory based on product-service update
+  stock: number; // Quantity in stock
+  rating: number; // Average rating (e.g., 4.5)
+  numReviews: number; // Number of reviews
+  images: string[]; // Array of image URLs for gallery
+  specifications: { [key: string]: string }; // Key-value pairs for specs
   // relatedProducts will be dynamically determined based on category
 }
+
+// Function to manage wishlist in localStorage (or a more persistent store)
+const addProductToWishlist = (product: Product) => {
+  const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+  if (!wishlist.some((item: Product) => item.id === product.id)) {
+    wishlist.push(product);
+    localStorage.setItem('wishlist', JSON.stringify(wishlist));
+    return true; // Item added
+  }
+  return false; // Item already exists
+};
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -39,7 +50,20 @@ const ProductDetailPage: React.FC = () => {
       setQuantity(1); // Reset quantity when product changes
       // Fetch related products from the same category, excluding the current product
       const productsInSameCategory = getProductsByCategory(product.category);
-      const filteredRelated = productsInSameCategory.filter(p => p.id !== product.id);
+      // Filter out products that are the same brand for more variety in related products
+      const filteredRelated = productsInSameCategory
+        .filter(p => p.id !== product.id && p.brand !== product.brand)
+        .sort(() => 0.5 - Math.random()) // Shuffle for variety
+        .slice(0, 5); // Limit to 5 related products for display
+
+      // If less than 5 related products from different brands, fill with general recommendations
+      if (filteredRelated.length < 5) {
+        const allOtherProducts = getProductsByCategory(product.category)
+          .filter(p => p.id !== product.id && !filteredRelated.some(fp => fp.id === p.id))
+          .sort(() => 0.5 - Math.random());
+        filteredRelated.push(...allOtherProducts.slice(0, 5 - filteredRelated.length));
+      }
+
       setRelatedProducts(filteredRelated);
     }
   }, [product]);
@@ -74,11 +98,13 @@ const ProductDetailPage: React.FC = () => {
     return <div className="flex">{stars}</div>;
   };
 
-  // Handle adding product to wishlist (mock functionality)
+  // Handle adding product to wishlist
   const handleAddToWishlist = () => {
-    console.log(`Added "${product.name}" to wishlist!`);
-    // In a real app, you'd update a global state or send to a backend
-    alert(`"${product.name}" added to your wishlist!`); // Using alert for demo purposes
+    if (addProductToWishlist(product)) {
+      alert(`"${product.name}" added to your wishlist!`);
+    } else {
+      alert(`"${product.name}" is already in your wishlist!`);
+    }
   };
 
   // Handle sharing product (using Web Share API)
@@ -241,7 +267,7 @@ const ProductDetailPage: React.FC = () => {
               className="bg-gray-200 hover:bg-gray-300 text-[#D81E05] rounded-full px-4 py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
               aria-label="Add to Wishlist"
             >
-              <Heart/>  
+              <Heart />
               <span className="hidden sm:inline">Wishlist</span>
             </Button>
             <Button
@@ -249,7 +275,7 @@ const ProductDetailPage: React.FC = () => {
               className="bg-gray-200 hover:bg-gray-300 text-[#222222] rounded-full px-4 py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
               aria-label="Share Product"
             >
-             <Share2/>  
+              <Share2 />
               <span className="hidden sm:inline">Share</span>
             </Button>
           </div>
