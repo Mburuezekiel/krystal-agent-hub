@@ -97,7 +97,7 @@ const Header: React.FC = () => {
       </div>
 
       {/* Animated Promo Text Bar (Visible on all screens, now the top-most bar on small screens) */}
-      <div className="bg-[#F8F8F8] py-1.5 px-4 text-center border-b border-gray-200 overflow-hidden">
+      {/* <div className="bg-[#F8F8F8] py-1.5 px-4 text-center border-b border-gray-200 overflow-hidden">
         <style jsx>{`
           @keyframes slide-in-out {
             0% { transform: translateX(100%); opacity: 0; }
@@ -112,7 +112,7 @@ const Header: React.FC = () => {
         <span className="inline-block text-[#D81E05] font-medium animate-promo whitespace-nowrap text-sm">
           🎉 FREE SHIPPING ON ALL ORDERS! LIMITED TIME! 🎉
         </span>
-      </div>
+      </div> */}
 
       {/* Main Header */}
       <div className="bg-[#D81E05] shadow-md border-b border-[#A01A04]">
