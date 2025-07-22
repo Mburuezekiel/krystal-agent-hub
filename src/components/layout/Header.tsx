@@ -3,7 +3,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShoppingCart, Heart, User, Search, Menu, X, Phone, Mail, Instagram, Facebook, LogIn, LogOut, Package, UserCircle } from 'lucide-react'; // Added X, Phone, Mail, Socials, Login/Logout, Package, UserCircle
+import { ShoppingCart, Heart, User, Search, Menu, X, Phone, Mail, Instagram, Facebook, LogIn, LogOut, Package, UserCircle, Music2Icon } from 'lucide-react'; // Added X, Phone, Mail, Socials, Login/Logout, Package, UserCircle
 import {
   Sheet,
   SheetContent,
@@ -91,7 +91,7 @@ const Header: React.FC = () => {
               <Instagram className="h-4 w-4" />
             </a>
             <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#222222] hover:text-[#D81E05] transition-colors">
-              <TikTokIcon className="h-4 w-4" />
+              <Music2Icon className="h-4 w-4" />
             </a>
           </div>
         </div>
