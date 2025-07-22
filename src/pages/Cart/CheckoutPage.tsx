@@ -1,8 +1,7 @@
 // src/pages/CheckoutPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
+
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label'; // Assuming you have a Label component from Shadcn
@@ -94,7 +93,7 @@ const CheckoutPage: React.FC = () => {
 
   return (
     <>
-      <Header />
+     
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh]">
         <h1 className="text-4xl font-bold text-center mb-8">Checkout</h1>
 
@@ -205,7 +204,7 @@ const CheckoutPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer />
+  
     </>
   );
 };
