@@ -14,7 +14,8 @@ import { Button } from '@/components/ui/button';
 import Autoplay from 'embla-carousel-autoplay';
 import Home from '../../assets/Home.png';
 import Arrivals from '../../assets/Arrivals.png';
-import Discover from '../../assets/krystal-logo.png'
+import Discover from '../../assets/krystal-logo.png';
+import Fashion from '../../assets/Fashion.png';
 
 
 interface HeroSlide {
@@ -28,17 +29,9 @@ interface HeroSlide {
 }
 
 const heroSlides: HeroSlide[] = [
+
   {
     id: '1',
-    imageSrc: Discover, // Krystal Red
-    altText: 'New Arrivals Collection Banner',
-    title: 'Discover What\'s New!',
-    subtitle: 'Fresh styles and products arriving daily. Don\'t miss out!',
-    ctaText: 'Shop New In',
-    ctaLink: '/new-in',
-  },
-  {
-    id: '2',
     imageSrc:Arrivals, // Krystal Dark with Accent
     altText: 'Mega Sale Event Banner',
     title: 'Mega Sale Event: Up to 70% Off!',
@@ -46,8 +39,8 @@ const heroSlides: HeroSlide[] = [
     ctaText: 'Explore Deals',
     ctaLink: '/sale',
   },
-  {
-    id: '3',
+    {
+    id: '2',
     imageSrc: Home, // Krystal Accent with Dark text
     altText: 'Home Essentials Banner',
     title: 'Your Home, Your Style',
@@ -55,6 +48,15 @@ const heroSlides: HeroSlide[] = [
     ctaText: 'Shop Home & Kitchen',
     ctaLink: '/category/Home%20&%20Kitchen',
   },
+    {
+    id: '3',
+    imageSrc: Fashion, // Krystal Red
+    altText: 'New Arrivals Collection Banner',
+    title: 'Discover What\'s New',
+    subtitle: 'Fresh styles and products arriving daily. Don\'t miss out!',
+    ctaText: 'Shop New In',
+    ctaLink: '/new-in',
+  }
 ];
 
 const HeroSection: React.FC = () => {

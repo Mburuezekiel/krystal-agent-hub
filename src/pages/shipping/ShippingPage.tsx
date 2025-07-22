@@ -1,13 +1,11 @@
 
 // src/pages/ShippingPage.tsx
 import React from 'react';
-import Header from '@/components/layout/Header';
-import Footer from '@/components/layout/Footer';
 
 const ShippingPage: React.FC = () => {
   return (
     <>
-      <Header />
+      
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh]">
         <h1 className="text-4xl font-bold text-center mb-8">Shipping Information</h1>
         <div className="max-w-3xl mx-auto text-lg space-y-6">
@@ -33,7 +31,7 @@ const ShippingPage: React.FC = () => {
           </p>
         </div>
       </div>
-      <Footer />
+     
     </>
   );
 };

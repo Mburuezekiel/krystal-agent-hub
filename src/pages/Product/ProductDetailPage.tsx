@@ -28,7 +28,7 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <>
-      <Header />
+      
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8]">
         <div className="flex flex-col md:flex-row gap-8">
           <div className="md:w-1/2">
@@ -50,7 +50,7 @@ const ProductDetailPage: React.FC = () => {
           </div>
         </div>
       </div>
-      <Footer />
+     
     </>
   );
 };
