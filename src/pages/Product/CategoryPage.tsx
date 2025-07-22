@@ -1,4 +1,3 @@
-// src/pages/CategoryPage.tsx
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
@@ -93,6 +92,19 @@ const CategoryPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen">
+      {/* Breadcrumb Navigation */}
+      <nav className="text-sm text-gray-600 mb-6">
+        <ol className="list-none p-0 inline-flex">
+          <li className="flex items-center">
+            <Link to="/" className="text-[#D81E05] hover:underline">Home</Link>
+            <span className="mx-2">/</span>
+          </li>
+          <li className="flex items-center text-gray-800">
+            {categoryName}
+          </li>
+        </ol>
+      </nav>
+
       {/* Page Title */}
       <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-8 text-[#222222]">
         Shop {categoryName}

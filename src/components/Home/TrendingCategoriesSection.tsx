@@ -137,7 +137,7 @@ const TrendingCategoriesSection: React.FC = () => {
         ))}
       </div>
       <br />
-      <h6 className="text-3xl md:text-4xl font-bold text-center  mb-8 text-[#222222]">
+      <h6 className="text-3xl md:text-xl bg-orange-500 font-bold text-center  mb-8 text-[#F8F8F8]">
         Picked For You
       </h6>
       <Carousel
