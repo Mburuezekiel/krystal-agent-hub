@@ -46,7 +46,7 @@ const CommunitySocialProofSection: React.FC = () => {
     <section className="py-8 bg-[#F8F8F8] rounded-lg shadow-inner"> {/* Krystal Light background */}
       <div className="container mx-auto px-4">
         <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]"> {/* Krystal Dark */}
-          💖 Shop the Look & Join Our Community 💖
+           Shop the Look & Join Our Community 
         </h2>
 
         {/* Customer Photos */}

@@ -11,9 +11,11 @@ const NewArrivalsSection: React.FC = () => {
   return (
     <section>
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]"> {/* Krystal Dark */}
-        ✨ New In! ✨
+        New In
       </h2>
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className='bg-gray-200'>
+        <br/>
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 ">
         {newArrivals.map((product) => (
           <Link to={`/product/${product.id}`} key={product.id} className="group block">
             <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
@@ -52,7 +54,10 @@ const NewArrivalsSection: React.FC = () => {
         {/* Ensure no whitespace/comments between Button and Link */}
       <Button asChild size="lg" className="..."><Link to="/new-in">View All New In</Link></Button>
       </div>
+      <br/>
+      </div>
     </section>
+    
   );
 };
 

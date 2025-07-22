@@ -3,9 +3,9 @@
 import HeroSection from '@/components/Home/HeroSection';
 import NewArrivalsSection from '@/components/Home/NewArrivalsSection';
 import TrendingCategoriesSection from '@/components/Home/TrendingCategoriesSection';
-import PersonalizedRecommendationsSection from '@/components/Home/PersonalizedRecommendationsSection';
 import PromotionsSection from '@/components/Home/PromotionsSection';
 import CommunitySocialProofSection from '@/components/Home/CommunitySocialProofSection';
+import { Separator } from '@/components/ui/separator';
 
 
 export default function HomePage() {
@@ -15,10 +15,10 @@ export default function HomePage() {
       <main className="flex-grow">
         <HeroSection />
         {/* Using krystalLight for background of main content sections */}
-        <section className="container mx-auto px-4 py-8 space-y-12 md:space-y-16 lg:space-y-20 bg-[#F8F8F8]">
-          <NewArrivalsSection />
+        <section className="container mx-auto px-4 py-8 space-y-12 md:space-y-16 lg:space-y-20 bg-gray-200">
+          <NewArrivalsSection/>
           <TrendingCategoriesSection />
-          <PersonalizedRecommendationsSection />
+          <Separator/>
           <PromotionsSection />
           <CommunitySocialProofSection />
         </section>
