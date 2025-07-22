@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -22,7 +21,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ALL_CATEGORIES } from '@/services/product-service';
 
-// Custom TikTok icon (since Lucide doesn't have it directly)
 const TikTokIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
   <svg
     xmlns="http://www.w3.org/2000/svg"
@@ -37,36 +35,29 @@ const TikTokIcon: React.FC<React.SVGProps<SVGSVGElement>> = (props) => (
 
 const Header: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  // Dummy authentication state for demonstration
-  const [isLoggedIn, setIsLoggedIn] = React.useState(true); // Set to true to test logged-in state
-  const [userName, setUserName] = React.useState("Jane Doe"); // Dummy user name
+  const [isLoggedIn, setIsLoggedIn] = React.useState(true);
+  const [userName, setUserName] = React.useState("Jane Doe");
 
-  // Filter out "New In" and "Sale" as they have dedicated sections/routes
   const mainCategories = ALL_CATEGORIES.filter(
     (cat) => cat !== "New In" && cat !== "Sale"
   );
 
-  // Function to close the sheet
   const closeSheet = () => setIsSheetOpen(false);
 
   const handleLogout = () => {
     setIsLoggedIn(false);
     setUserName("");
     closeSheet();
-    // In a real app, you'd call your authentication service logout method here
   };
 
   const handleLoginRedirect = () => {
     closeSheet();
-    // In a real app, you'd redirect to your login page
     alert("Redirecting to login page...");
   };
 
   return (
     <header className="w-full sticky top-0 z-50">
-      {/* Top Contact & Socials Bar - Hidden on small screens */}
       <div className="hidden sm:flex bg-[#F8F8F8] text-[#222222] text-xs py-2 px-4 flex-col sm:flex-row items-center justify-between gap-2 border-b border-gray-200">
-        {/* Left Section: Contact Details */}
         <div className="flex items-center gap-4">
           <div className="flex items-center gap-2">
             <Phone className="h-3 w-3 text-[#D81E05]" />
@@ -82,7 +73,6 @@ const Header: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Section: Social Icons */}
         <div className="flex items-center gap-3">
           <a href="https://www.facebook.com" target="_blank" rel="noopener noreferrer" aria-label="Facebook" className="text-[#222222] hover:text-[#D81E05] transition-colors">
             <Facebook className="h-4 w-4" />
@@ -96,28 +86,9 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      {/* Animated Promo Text Bar (Visible on all screens, now the top-most bar on small screens) */}
-      {/* <div className="bg-[#F8F8F8] py-1.5 px-4 text-center border-b border-gray-200 overflow-hidden">
-        <style jsx>{`
-          @keyframes slide-in-out {
-            0% { transform: translateX(100%); opacity: 0; }
-            10% { transform: translateX(0); opacity: 1; }
-            90% { transform: translateX(0); opacity: 1; }
-            100% { transform: translateX(-100%); opacity: 0; }
-          }
-          .animate-promo {
-            animation: slide-in-out 10s infinite ease-in-out;
-          }
-        `}</style>
-        <span className="inline-block text-[#D81E05] font-medium animate-promo whitespace-nowrap text-sm">
-          🎉 FREE SHIPPING ON ALL ORDERS! LIMITED TIME! 🎉
-        </span>
-      </div> */}
 
-      {/* Main Header */}
       <div className="bg-[#D81E05] shadow-md border-b border-[#A01A04]">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
-          {/* Mobile Menu Toggle (Sheet Trigger) */}
           <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="lg:hidden text-white hover:bg-[#A01A04]">
@@ -133,7 +104,6 @@ const Header: React.FC = () => {
                 </SheetDescription>
               </SheetHeader>
               <div className="pt-4 pb-6 overflow-y-auto flex-grow">
-                {/* Mobile Search Bar */}
                 <div className="relative mb-6">
                   <Input
                     type="search"
@@ -143,12 +113,10 @@ const Header: React.FC = () => {
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 h-5 w-5" />
                 </div>
 
-                {/* Mobile Navigation Links */}
                 <nav className="flex flex-col gap-4 text-lg font-medium">
                   <Link to="/new-in" onClick={closeSheet} className="block py-2 hover:text-[#D81E05] transition-colors">New In</Link>
                   <Link to="/sale" onClick={closeSheet} className="block py-2 font-bold text-[#D81E05] hover:text-[#222222] transition-colors">Sale</Link>
 
-                  {/* Mobile Categories (consistent 2 columns) */}
                   <div className="border-t border-gray-200 pt-4 mt-4">
                     <h3 className="text-gray-500 text-sm uppercase mb-2">Shop by Category</h3>
                     <div className="grid grid-cols-2 gap-2">
@@ -165,16 +133,13 @@ const Header: React.FC = () => {
                 </nav>
               </div>
 
-              {/* Mobile Action Icons (Cart & Profile only) */}
               <div className="mt-auto pt-6 border-t border-gray-200 flex justify-around items-center">
-                {/* Cart always visible */}
                 <Button variant="ghost" size="icon" className="text-[#222222] hover:bg-gray-100" asChild>
                   <Link to="/cart" onClick={closeSheet}>
                     <ShoppingCart className="h-6 w-6" />
                     <span className="sr-only">Cart</span>
                   </Link>
                 </Button>
-                {/* Profile dropdown for mobile */}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-[#222222] hover:bg-gray-100">
@@ -197,7 +162,7 @@ const Header: React.FC = () => {
                             <Package className="h-4 w-4" /> Orders
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild> {/* Wishlist for mobile profile dropdown */}
+                        <DropdownMenuItem asChild>
                           <Link to="/wishlist" onClick={closeSheet} className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                             <Heart className="h-4 w-4" /> Wishlist
                           </Link>
@@ -218,13 +183,11 @@ const Header: React.FC = () => {
             </SheetContent>
           </Sheet>
 
-          {/* Logo */}
           <Link to="/" className="flex flex-col items-center flex-shrink-0 lg:flex-row">
             <span className="font-extrabold text-2xl sm:text-3xl lg:text-3xl text-white tracking-wider leading-none">KRYSTAL</span>
             <span className="font-normal text-xs sm:text-sm lg:text-base text-white -mt-1 lg:ml-1 lg:mt-0 font-serif">STORE</span>
           </Link>
 
-          {/* Search Bar (Desktop) */}
           <div className="flex-grow max-w-xl hidden lg:block relative">
             <Input
               type="search"
@@ -234,12 +197,10 @@ const Header: React.FC = () => {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 h-5 w-5" />
           </div>
 
-          {/* Navigation Links (Desktop) */}
           <nav className="hidden lg:flex items-center gap-6 text-sm font-medium">
             <Link to="/new-in" className="text-white hover:text-[#FFD700] transition-colors">New In</Link>
             <Link to="/sale" className="font-bold text-[#FFD700] hover:text-white transition-colors">Sale</Link>
 
-            {/* Categories Mega Menu (Desktop) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <span className="text-white cursor-pointer hover:text-[#FFD700] transition-colors flex items-center gap-1">
@@ -264,10 +225,8 @@ const Header: React.FC = () => {
             <Link to="/contact" className="text-white hover:text-[#FFD700] transition-colors">Contact</Link>
           </nav>
 
-          {/* Action Icons (Desktop & Mobile) */}
           <div className="flex items-center gap-2 md:gap-4">
             
-            {/* Wishlist Icon (Desktop only) */}
             <Button variant="ghost" size="icon" className="hidden lg:flex text-white hover:bg-[#A01A04]" asChild>
               <Link to="/wishlist">
                 <Heart className="h-5 w-5" />
@@ -275,7 +234,6 @@ const Header: React.FC = () => {
               </Link>
             </Button>
 
-            {/* Cart Icon (Always visible) */}
             <Button variant="ghost" size="icon" className="text-white hover:bg-[#A01A04]" asChild>
               <Link to="/cart">
                 <ShoppingCart className="h-5 w-5" />
@@ -283,7 +241,6 @@ const Header: React.FC = () => {
               </Link>
             </Button>
 
-            {/* User/Profile Icon with Dropdown (Always visible) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:bg-[#A01A04]">
@@ -306,7 +263,7 @@ const Header: React.FC = () => {
                         <Package className="h-4 w-4" /> Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="lg:hidden"> {/* Wishlist for mobile profile dropdown */}
+                    <DropdownMenuItem asChild className="lg:hidden">
                       <Link to="/wishlist" className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                         <Heart className="h-4 w-4" /> Wishlist
                       </Link>
