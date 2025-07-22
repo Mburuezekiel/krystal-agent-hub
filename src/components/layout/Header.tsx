@@ -254,7 +254,7 @@ const Header: React.FC = () => {
                 <DropdownMenuSeparator className="bg-gray-200 mb-3" /> {/* Light theme separator */}
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                   {mainCategories.map(category => (
-                    <DropdownMenuItem asChild key={category} className="p-0 focus:bg-transparent">
+                    <DropdownMenuItem asChild key={category} className="p-0 focus:bg-red">
                       <Link to={`/category/${encodeURIComponent(category)}`} className="block px-3 py-2 rounded-md hover:bg-[#D81E05] hover:text-white transition-colors text-base">
                         {category}
                       </Link>
