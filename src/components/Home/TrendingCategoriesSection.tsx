@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { ALL_CATEGORIES } from "@/services/product-service";
 import { Card, CardContent } from "../ui/card";
@@ -8,11 +8,13 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  type CarouselApi, // Import CarouselApi type
 } from "../ui/carousel";
 import {
   getPersonalizedRecommendations,
   Product,
 } from "@/services/product-service";
+
 interface CategoryDisplay {
   name: string;
   imageUrl: string;
@@ -53,9 +55,60 @@ const TrendingCategoriesSection: React.FC = () => {
 
   const hasRecommendations = recommendations.length > 0;
 
+  // Carousel auto-slide state and refs
+  const [api, setApi] = useState<CarouselApi>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const AUTOPLAY_INTERVAL = 3000; // 3 seconds
+
+  const scrollNext = useCallback(() => {
+    if (api) {
+      if (api.selectedScrollSnap() === api.scrollSnapList().length - 1) {
+        api.scrollTo(0); // Loop back to the start
+      } else {
+        api.scrollNext();
+      }
+    }
+  }, [api]);
+
+  const startAutoplay = useCallback(() => {
+    if (api) {
+      timerRef.current = setInterval(scrollNext, AUTOPLAY_INTERVAL);
+    }
+  }, [api, scrollNext]);
+
+  const stopAutoplay = useCallback(() => {
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, []);
+
+  // Effect to manage autoplay lifecycle
+  useEffect(() => {
+    if (!api) return;
+
+    startAutoplay();
+
+    // Clear interval on unmount
+    return () => {
+      stopAutoplay();
+    };
+  }, [api, startAutoplay, stopAutoplay]);
+
+  // Pause on click (if you don't want it to continue sliding after manual interaction)
+  // useEffect(() => {
+  //   if (!api) return;
+  //   api.on("pointerDown", stopAutoplay);
+  //   return () => {
+  //     api.off("pointerDown", stopAutoplay);
+  //   };
+  // }, [api, stopAutoplay]);
+
+
   if (!hasRecommendations) {
     return null;
   }
+
   return (
     <section className="py-8 bg-[#F8F8F8] ">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]">
@@ -90,7 +143,11 @@ const TrendingCategoriesSection: React.FC = () => {
       <Carousel
         opts={{
           align: "start",
+          loop: true, // Enable native loop if your Embla Carousel version supports it easily for continuous sliding
         }}
+        setApi={setApi} // Set the API instance here
+        onMouseEnter={stopAutoplay} // Pause on hover
+        onMouseLeave={startAutoplay} // Resume on mouse leave
         className="w-full"
       >
         <CarouselContent className="-ml-4">
@@ -130,6 +187,7 @@ const TrendingCategoriesSection: React.FC = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
+        {/* Navigation buttons will still work, but are hidden on small screens */}
         <CarouselPrevious className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70" />
         <CarouselNext className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70" />
       </Carousel>

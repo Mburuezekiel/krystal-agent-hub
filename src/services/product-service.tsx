@@ -437,7 +437,7 @@ const DUMMY_PRODUCTS: Product[] = [
     specifications: { "Modes": "5", "Battery Life": "2 weeks", "Feature": "Pressure Sensor" }
   },
   {
-    id: 'p42', name: 'Aromatherapy Essential Oil Diffuser', price: 3200,
+    id: 'p42', name: 'Aromatherapy Essential Oil Diffuser', price: 3200,oldPrice: 3500,
     imageUrl: 'https://placehold.co/400x500/DAA520/FFFFFF?text=Oil+Diffuser', category: 'Beauty & Health',isNew: true,
     description: 'Stylish aromatherapy essential oil diffuser to create a relaxing ambiance. Features LED lighting and auto shut-off.',
     brand: 'ZenAroma', stock: 25, rating: 4.6, numReviews: 90,
