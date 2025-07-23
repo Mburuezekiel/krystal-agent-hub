@@ -10,7 +10,7 @@ import Footer from "./components/layout/Footer";
 
 import HomePage from "./pages/landing/Index";
 
-import AgentDash from "./pages/Admin/Index";
+
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassward";

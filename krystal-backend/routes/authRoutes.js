@@ -1,4 +1,3 @@
-
 import express from 'express';
 import User from '../models/User.js';
 import jwt from 'jsonwebtoken';
@@ -62,6 +61,7 @@ router.post('/register', async (req, res) => {
   }
 });
 
+// Modified login route to check for admin/agent role
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -69,17 +69,23 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      res.json({
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userName: user.userName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        address: user.address,
-        role: user.role,
-        token: generateToken(user._id),
-      });
+      // Check if the user's role is 'admin' or 'agent'
+      if (user.role === 'admin' || user.role === 'agent') {
+        res.json({
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userName: user.userName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          address: user.address,
+          role: user.role,
+          token: generateToken(user._id),
+        });
+      } else {
+        // If the user's role is not admin or agent, deny access
+        res.status(403).json({ message: 'Access denied: Only admin and agent accounts can log in here.' });
+      }
     } else {
       res.status(401).json({ message: 'Invalid email or password' });
     }
@@ -136,7 +142,7 @@ router.post('/forgotpassword', async (req, res) => {
 
   } catch (error) {
     console.error('Error during password reset request:', error);
-   
+
     if (user && user.resetPasswordToken && user.resetPasswordExpire) {
       user.resetPasswordToken = undefined;
       user.resetPasswordExpire = undefined;
