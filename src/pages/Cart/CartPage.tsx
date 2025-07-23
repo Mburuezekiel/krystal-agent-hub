@@ -1,37 +1,79 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { ShoppingCart, Plus, Minus, X, Heart, ArrowLeft, Shield, Truck, RotateCcw, Star } from 'lucide-react';
 
-import { Button } from '@/components/ui/button';
-import { getProductById, Product } from '@/services/product-service';
-import { X } from 'lucide-react';
+// Mock product service
+const getProductById = (id) => {
+  const products = {
+    'p1': {
+      id: 'p1',
+      name: 'Premium Wireless Headphones',
+      category: 'Electronics',
+      price: 8999,
+      originalPrice: 12999,
+      imageUrl: 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
+      rating: 4.5,
+      reviews: 245,
+      inStock: true,
+      brand: 'AudioTech'
+    },
+    'p5': {
+      id: 'p5',
+      name: 'Smart Fitness Watch',
+      category: 'Wearables',
+      price: 15999,
+      originalPrice: 19999,
+      imageUrl: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop',
+      rating: 4.3,
+      reviews: 189,
+      inStock: true,
+      brand: 'FitPro'
+    },
+    'p15': {
+      id: 'p15',
+      name: 'Professional Camera Lens',
+      category: 'Photography',
+      price: 45000,
+      originalPrice: 52000,
+      imageUrl: 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=300&h=300&fit=crop',
+      rating: 4.8,
+      reviews: 76,
+      inStock: false,
+      brand: 'LensMaster'
+    }
+  };
+  return products[id] || null;
+};
 
-interface CartItem {
-  productId: string;
-  quantity: number;
-}
+const CartPage = () => {
+  const [cartItems, setCartItems] = useState([
+    { productId: 'p1', quantity: 1, selected: true },
+    { productId: 'p5', quantity: 2, selected: true },
+    { productId: 'p15', quantity: 1, selected: false },
+  ]);
+  
+  const [productsInCart, setProductsInCart] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
+  const [savedForLater, setSavedForLater] = useState([]);
+  const [promoCode, setPromoCode] = useState('');
+  const [promoApplied, setPromoApplied] = useState(false);
 
-const DUMMY_CART_ITEMS: CartItem[] = [
-  { productId: 'p1', quantity: 1 },
-  { productId: 'p5', quantity: 2 },
-  { productId: 'p15', quantity: 1 },
-];
-
-const CartPage: React.FC = () => {
-  const [cartItems, setCartItems] = React.useState<CartItem[]>(DUMMY_CART_ITEMS);
-  const [productsInCart, setProductsInCart] = React.useState<Product[]>([]);
-
-  React.useEffect(() => {
-    const fetchedProducts: Product[] = [];
+  useEffect(() => {
+    const fetchedProducts = [];
     cartItems.forEach(item => {
       const product = getProductById(item.productId);
       if (product) {
-        fetchedProducts.push({ ...product, quantity: item.quantity });
+        fetchedProducts.push({ ...product, quantity: item.quantity, selected: item.selected });
       }
     });
     setProductsInCart(fetchedProducts);
   }, [cartItems]);
 
-  const updateQuantity = (productId: string, delta: number) => {
+  useEffect(() => {
+    const allSelected = cartItems.every(item => item.selected);
+    setSelectAll(allSelected && cartItems.length > 0);
+  }, [cartItems]);
+
+  const updateQuantity = (productId, delta) => {
     setCartItems(prevItems =>
       prevItems.map(item =>
         item.productId === productId
@@ -41,115 +83,426 @@ const CartPage: React.FC = () => {
     );
   };
 
-  const removeItem = (productId: string) => {
+  const removeItem = (productId) => {
     setCartItems(prevItems => prevItems.filter(item => item.productId !== productId));
+  };
+
+  const toggleItemSelection = (productId) => {
+    setCartItems(prevItems =>
+      prevItems.map(item =>
+        item.productId === productId
+          ? { ...item, selected: !item.selected }
+          : item
+      )
+    );
+  };
+
+  const toggleSelectAll = () => {
+    const newSelectAll = !selectAll;
+    setSelectAll(newSelectAll);
+    setCartItems(prevItems =>
+      prevItems.map(item => ({ ...item, selected: newSelectAll }))
+    );
+  };
+
+  const saveForLater = (productId) => {
+    const item = cartItems.find(item => item.productId === productId);
+    if (item) {
+      setSavedForLater(prev => [...prev, item]);
+      removeItem(productId);
+    }
+  };
+
+  const moveToCart = (productId) => {
+    const item = savedForLater.find(item => item.productId === productId);
+    if (item) {
+      setCartItems(prev => [...prev, { ...item, selected: true }]);
+      setSavedForLater(prev => prev.filter(item => item.productId !== productId));
+    }
+  };
+
+  const applyPromoCode = () => {
+    if (promoCode.toUpperCase() === 'SAVE10') {
+      setPromoApplied(true);
+    }
   };
 
   const calculateSubtotal = () => {
     return productsInCart.reduce((total, product) => {
-      const itemInCart = cartItems.find(item => item.productId === product.id);
-      return total + (product.price * (itemInCart?.quantity || 0));
+      if (product.selected) {
+        const itemInCart = cartItems.find(item => item.productId === product.id);
+        return total + (product.price * (itemInCart?.quantity || 0));
+      }
+      return total;
     }, 0);
   };
 
+  const selectedItemsCount = cartItems.filter(item => item.selected).length;
   const subtotal = calculateSubtotal();
+  const discount = promoApplied ? subtotal * 0.1 : 0;
   const shippingCost = subtotal > 5000 ? 0 : 300;
-  const total = subtotal + shippingCost;
+  const tax = (subtotal - discount) * 0.16; // 16% VAT
+  const total = subtotal - discount + shippingCost + tax;
+
+  const StarRating = ({ rating, size = "w-4 h-4" }) => {
+    return (
+      <div className="flex items-center gap-1">
+        {[1, 2, 3, 4, 5].map(star => (
+          <Star 
+            key={star} 
+            className={`${size} ${star <= rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`}
+          />
+        ))}
+      </div>
+    );
+  };
+
+  if (productsInCart.length === 0 && savedForLater.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-white rounded-lg shadow-sm p-12">
+              <ShoppingCart className="w-24 h-24 text-gray-300 mx-auto mb-6" />
+              <h1 className="text-3xl font-bold text-gray-900 mb-4">Your cart is empty</h1>
+              <p className="text-gray-600 mb-8 text-lg">
+                Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
+              </p>
+              <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
+                Start Shopping
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <>
-     
-      <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh]">
-        <h1 className="text-4xl font-bold text-center mb-8">Your Shopping Cart</h1>
-
-        {productsInCart.length === 0 ? (
-          <div className="text-center text-lg py-10">
-            <p className="mb-4">Your cart is empty. Start shopping now!</p>
-            <Button asChild className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold">
-              <Link to="/">Continue Shopping</Link>
-            </Button>
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b sticky top-0 z-40">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+                <ArrowLeft className="w-5 h-5" />
+              </button>
+              <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
+              <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-medium">
+                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'}
+              </span>
+            </div>
+            <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Shield className="w-4 h-4" />
+                Secure Checkout
+              </div>
+              <div className="flex items-center gap-2">
+                <Truck className="w-4 h-4" />
+                Free Shipping over KES 5,000
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-              <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Items in your Cart</h2>
-              <div className="space-y-6">
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Cart Section */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Select All & Bulk Actions */}
+            <div className="bg-white rounded-lg shadow-sm p-4">
+              <div className="flex items-center justify-between">
+                <label className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={selectAll}
+                    onChange={toggleSelectAll}
+                    className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                  />
+                  <span className="font-medium text-gray-900">
+                    Select All ({cartItems.length} items)
+                  </span>
+                </label>
+                <div className="flex items-center gap-4 text-sm">
+                  <button 
+                    className="text-red-600 hover:text-red-700 font-medium"
+                    onClick={() => {
+                      const selectedItems = cartItems.filter(item => item.selected);
+                      selectedItems.forEach(item => removeItem(item.productId));
+                    }}
+                  >
+                    Delete Selected
+                  </button>
+                  <button className="text-gray-600 hover:text-gray-700 font-medium">
+                    Save for Later
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Cart Items */}
+            <div className="bg-white rounded-lg shadow-sm overflow-hidden">
+              <div className="divide-y divide-gray-200">
                 {productsInCart.map(product => {
                   const itemQuantity = cartItems.find(item => item.productId === product.id)?.quantity || 0;
+                  const isSelected = cartItems.find(item => item.productId === product.id)?.selected || false;
+                  const savings = product.originalPrice - product.price;
+                  
                   return (
-                    <div key={product.id} className="flex items-center gap-4 border-b pb-4 last:border-b-0 last:pb-0">
-                      <Link to={`/product/${product.id}`} className="flex-shrink-0">
-                        <img src={product.imageUrl} alt={product.name} className="w-24 h-24 object-cover rounded-md border border-gray-200" />
-                      </Link>
-                      <div className="flex-grow">
-                        <Link to={`/product/${product.id}`} className="text-lg font-semibold text-[#222222] hover:text-[#D81E05]">
-                          {product.name}
-                        </Link>
-                        <p className="text-gray-600 text-sm">{product.category}</p>
-                        <p className="text-[#D81E05] font-bold mt-1">KES {product.price.toFixed(2)}</p>
+                    <div key={product.id} className={`p-6 ${!product.inStock ? 'bg-gray-50' : ''}`}>
+                      <div className="flex gap-4">
+                        {/* Checkbox */}
+                        <div className="flex items-start pt-2">
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => toggleItemSelection(product.id)}
+                            className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
+                            disabled={!product.inStock}
+                          />
+                        </div>
+
+                        {/* Product Image */}
+                        <div className="flex-shrink-0">
+                          <div className="relative">
+                            <img 
+                              src={product.imageUrl} 
+                              alt={product.name}
+                              className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
+                            />
+                            {!product.inStock && (
+                              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                                <span className="text-white text-xs font-medium">Out of Stock</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Product Details */}
+                        <div className="flex-grow min-w-0">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
+                            <div className="flex-grow">
+                              <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2">
+                                {product.name}
+                              </h3>
+                              <p className="text-gray-600 text-sm mb-2">{product.brand} • {product.category}</p>
+                              
+                              {/* Rating */}
+                              <div className="flex items-center gap-2 mb-3">
+                                <StarRating rating={product.rating} />
+                                <span className="text-sm text-gray-600">
+                                  {product.rating} ({product.reviews} reviews)
+                                </span>
+                              </div>
+
+                              {/* Price */}
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="text-xl font-bold text-gray-900">
+                                  KES {product.price.toLocaleString()}
+                                </span>
+                                {savings > 0 && (
+                                  <>
+                                    <span className="text-sm text-gray-500 line-through">
+                                      KES {product.originalPrice.toLocaleString()}
+                                    </span>
+                                    <span className="text-sm text-green-600 font-medium">
+                                      Save KES {savings.toLocaleString()}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+
+                              {/* Stock Status */}
+                              {product.inStock ? (
+                                <p className="text-green-600 text-sm font-medium">✓ In Stock</p>
+                              ) : (
+                                <p className="text-red-600 text-sm font-medium">Out of Stock</p>
+                              )}
+                            </div>
+
+                            {/* Quantity and Actions */}
+                            <div className="flex flex-col items-end gap-3">
+                              {/* Quantity Controls */}
+                              {product.inStock && (
+                                <div className="flex items-center border border-gray-300 rounded-lg">
+                                  <button
+                                    onClick={() => updateQuantity(product.id, -1)}
+                                    className="p-2 hover:bg-gray-100"
+                                    disabled={itemQuantity <= 1}
+                                  >
+                                    <Minus className="w-4 h-4" />
+                                  </button>
+                                  <span className="px-4 py-2 font-medium min-w-[3rem] text-center">
+                                    {itemQuantity}
+                                  </span>
+                                  <button
+                                    onClick={() => updateQuantity(product.id, 1)}
+                                    className="p-2 hover:bg-gray-100"
+                                  >
+                                    <Plus className="w-4 h-4" />
+                                  </button>
+                                </div>
+                              )}
+
+                              {/* Action Buttons */}
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => saveForLater(product.id)}
+                                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Save for later"
+                                >
+                                  <Heart className="w-5 h-5" />
+                                </button>
+                                <button
+                                  onClick={() => removeItem(product.id)}
+                                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                  title="Remove item"
+                                >
+                                  <X className="w-5 h-5" />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQuantity(product.id, -1)}
-                          className="w-8 h-8 rounded-full border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white"
-                        >
-                          -
-                        </Button>
-                        <span className="text-lg font-medium w-8 text-center">{itemQuantity}</span>
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => updateQuantity(product.id, 1)}
-                          className="w-8 h-8 rounded-full border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white"
-                        >
-                          +
-                        </Button>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        onClick={() => removeItem(product.id)}
-                        className="text-red-500 hover:bg-red-50"
-                      >
-                        <X className="h-5 w-5" />
-                        <span className="sr-only">Remove item</span>
-                      </Button>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit">
-              <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Order Summary</h2>
-              <div className="space-y-3 text-lg">
-                <div className="flex justify-between">
-                  <span>Subtotal:</span>
-                  <span>KES {subtotal.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span>Shipping:</span>
-                  <span>{shippingCost === 0 ? 'FREE' : `KES ${shippingCost.toFixed(2)}`}</span>
-                </div>
-                <div className="flex justify-between font-bold text-xl border-t pt-3 mt-3">
-                  <span>Total:</span>
-                  <span>KES {total.toFixed(2)}</span>
+            {/* Saved for Later */}
+            {savedForLater.length > 0 && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Saved for Later ({savedForLater.length} items)
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {savedForLater.map(item => {
+                    const product = getProductById(item.productId);
+                    return (
+                      <div key={item.productId} className="border border-gray-200 rounded-lg p-4">
+                        <img 
+                          src={product.imageUrl} 
+                          alt={product.name}
+                          className="w-full h-32 object-cover rounded-lg mb-3"
+                        />
+                        <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
+                        <p className="text-lg font-bold text-gray-900 mb-3">
+                          KES {product.price.toLocaleString()}
+                        </p>
+                        <button
+                          onClick={() => moveToCart(item.productId)}
+                          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition-colors"
+                        >
+                          Move to Cart
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
-              <Button asChild className="w-full mt-8 bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold">
-                <Link to="/checkout">Proceed to Checkout</Link>
-              </Button>
-              <Button variant="outline" asChild className="w-full mt-4 border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white rounded-full px-8 py-3 text-lg font-semibold">
-                <Link to="/">Continue Shopping</Link>
-              </Button>
+            )}
+          </div>
+
+          {/* Order Summary Sidebar */}
+          <div className="lg:col-span-1">
+            <div className="sticky top-24">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Order Summary</h2>
+                
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between">
+                    <span>Items ({selectedItemsCount}):</span>
+                    <span>KES {subtotal.toLocaleString()}</span>
+                  </div>
+                  
+                  {promoApplied && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Discount (SAVE10):</span>
+                      <span>-KES {discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex justify-between">
+                    <span>Shipping:</span>
+                    <span className={shippingCost === 0 ? 'text-green-600 font-medium' : ''}>
+                      {shippingCost === 0 ? 'FREE' : `KES ${shippingCost.toLocaleString()}`}
+                    </span>
+                  </div>
+                  
+                  <div className="flex justify-between">
+                    <span>Tax (16% VAT):</span>
+                    <span>KES {tax.toLocaleString()}</span>
+                  </div>
+                  
+                  <div className="border-t pt-3 mt-3">
+                    <div className="flex justify-between text-lg font-bold">
+                      <span>Total:</span>
+                      <span>KES {total.toLocaleString()}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Promo Code */}
+                <div className="mt-6">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Enter promo code"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value)}
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                    />
+                    <button
+                      onClick={applyPromoCode}
+                      className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {promoApplied && (
+                    <p className="text-green-600 text-sm mt-2">✓ Promo code applied!</p>
+                  )}
+                </div>
+
+                {/* Checkout Button */}
+                <button 
+                  className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
+                  disabled={selectedItemsCount === 0}
+                >
+                  Proceed to Checkout
+                </button>
+
+                <button className="w-full mt-3 border-2 border-red-600 text-red-600 hover:bg-red-50 py-3 rounded-lg font-semibold transition-colors duration-200">
+                  Continue Shopping
+                </button>
+
+                {/* Trust Badges */}
+                <div className="mt-6 pt-6 border-t">
+                  <div className="space-y-3 text-sm text-gray-600">
+                    <div className="flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-green-500" />
+                      <span>Secure SSL encrypted checkout</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Truck className="w-4 h-4 text-blue-500" />
+                      <span>Free shipping on orders over KES 5,000</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <RotateCcw className="w-4 h-4 text-orange-500" />
+                      <span>Easy 30-day returns</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
-    
-    </>
+    </div>
   );
 };
 
