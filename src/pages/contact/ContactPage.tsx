@@ -1,9 +1,8 @@
 
-// src/pages/ContactPage.tsx
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea'; // Assuming you add Textarea from Shadcn
+import { Textarea } from '@/components/ui/textarea';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -24,8 +23,6 @@ const ContactPage: React.FC = () => {
 
   const onSubmit = (data: ContactFormValues) => {
     console.log("Contact Form Submitted:", data);
-    // Using a simple alert for demonstration, replace with a custom modal/toast
-    // IMPORTANT: DO NOT use window.alert() in production apps, use a custom modal
     alert("Thank you for your message! We will get back to you soon.");
     reset();
   };

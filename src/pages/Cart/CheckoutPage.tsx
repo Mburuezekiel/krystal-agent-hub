@@ -1,17 +1,14 @@
-// src/pages/CheckoutPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label'; // Assuming you have a Label component from Shadcn
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'; // Assuming you have RadioGroup from Shadcn
+import { Label } from '@/components/ui/label';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
-// Dummy Cart State (in a real app, this would be passed from CartPage or global state)
-// Re-using the DUMMY_CART_ITEMS and getProductById for demonstration
 import { getProductById, Product } from '@/services/product-service';
 
 interface CartItem {
@@ -24,7 +21,6 @@ const DUMMY_CHECKOUT_ITEMS: CartItem[] = [
   { productId: 'p5', quantity: 2 },
 ];
 
-// Zod schema for shipping details
 const shippingSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
@@ -35,7 +31,6 @@ const shippingSchema = z.object({
   email: z.string().email("Invalid email address"),
 });
 
-// Zod schema for payment details (simplified for dummy)
 const paymentSchema = z.object({
   paymentMethod: z.enum(["mpesa", "card", "cash"], {
     required_error: "Payment method is required",
@@ -53,7 +48,7 @@ const CheckoutPage: React.FC = () => {
   const { register: registerPayment, handleSubmit: handlePaymentSubmit, formState: { errors: paymentErrors }, setValue: setPaymentValue, watch: watchPaymentMethod } = useForm<PaymentFormValues>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      paymentMethod: "mpesa", // Default selected
+      paymentMethod: "mpesa",
     }
   });
 
@@ -85,10 +80,7 @@ const CheckoutPage: React.FC = () => {
 
   const onPlaceOrder = (shippingData: ShippingFormValues, paymentData: PaymentFormValues) => {
     console.log("Placing Order:", { shippingData, paymentData, cartItems: productsInCart, total });
-    // In a real app, you'd send this data to your backend for order processing
     alert("Order Placed Successfully! Thank you for your purchase.");
-    // Redirect to order confirmation page or homepage
-    // navigate('/order-confirmation');
   };
 
   return (
@@ -98,9 +90,7 @@ const CheckoutPage: React.FC = () => {
         <h1 className="text-4xl font-bold text-center mb-8">Checkout</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Shipping and Payment Forms */}
           <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-            {/* Shipping Address */}
             <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Shipping Address</h2>
             <form id="shipping-form" onSubmit={handleShippingSubmit(data => console.log('Shipping data:', data))} className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
@@ -140,7 +130,6 @@ const CheckoutPage: React.FC = () => {
               </div>
             </form>
 
-            {/* Payment Method */}
             <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05] mt-10">Payment Method</h2>
             <form id="payment-form" onSubmit={handlePaymentSubmit(data => console.log('Payment data:', data))}>
               <RadioGroup
@@ -165,7 +154,6 @@ const CheckoutPage: React.FC = () => {
             </form>
           </div>
 
-          {/* Order Summary */}
           <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit">
             <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Order Summary</h2>
             <div className="space-y-4 mb-6">

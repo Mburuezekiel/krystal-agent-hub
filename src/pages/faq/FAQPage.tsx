@@ -1,6 +1,5 @@
 
 
-// src/pages/FAQPage.tsx
 import React from 'react';
 
 import {
@@ -8,7 +7,7 @@ import {
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
-} from "@/components/ui/accordion"; // Assuming you add Accordion from Shadcn
+} from "@/components/ui/accordion";
 
 const FAQPage: React.FC = () => {
   const faqs = [

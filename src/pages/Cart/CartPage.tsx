@@ -1,35 +1,31 @@
-// src/pages/CartPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
-import { getProductById, Product } from '@/services/product-service'; // To fetch product details
+import { getProductById, Product } from '@/services/product-service';
 import { X } from 'lucide-react';
 
-// Define a simple CartItem interface
 interface CartItem {
   productId: string;
   quantity: number;
 }
 
-// Dummy Cart State (in a real app, this would be global state or fetched from backend)
 const DUMMY_CART_ITEMS: CartItem[] = [
-  { productId: 'p1', quantity: 1 }, // Elegant Red Maxi Dress
-  { productId: 'p5', quantity: 2 }, // Classic Black Heels (on sale)
-  { productId: 'p15', quantity: 1 }, // Wireless Bluetooth Earbuds
+  { productId: 'p1', quantity: 1 },
+  { productId: 'p5', quantity: 2 },
+  { productId: 'p15', quantity: 1 },
 ];
 
 const CartPage: React.FC = () => {
   const [cartItems, setCartItems] = React.useState<CartItem[]>(DUMMY_CART_ITEMS);
   const [productsInCart, setProductsInCart] = React.useState<Product[]>([]);
 
-  // Simulate fetching product details for items in cart
   React.useEffect(() => {
     const fetchedProducts: Product[] = [];
     cartItems.forEach(item => {
       const product = getProductById(item.productId);
       if (product) {
-        fetchedProducts.push({ ...product, quantity: item.quantity }); // Add quantity to product for easier rendering
+        fetchedProducts.push({ ...product, quantity: item.quantity });
       }
     });
     setProductsInCart(fetchedProducts);
@@ -39,7 +35,7 @@ const CartPage: React.FC = () => {
     setCartItems(prevItems =>
       prevItems.map(item =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) } // Ensure quantity is at least 1
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
           : item
       )
     );
@@ -57,7 +53,7 @@ const CartPage: React.FC = () => {
   };
 
   const subtotal = calculateSubtotal();
-  const shippingCost = subtotal > 5000 ? 0 : 300; // Free shipping over KES 5,000
+  const shippingCost = subtotal > 5000 ? 0 : 300;
   const total = subtotal + shippingCost;
 
   return (
@@ -75,7 +71,6 @@ const CartPage: React.FC = () => {
           </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Cart Items List */}
             <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
               <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Items in your Cart</h2>
               <div className="space-y-6">
@@ -127,7 +122,6 @@ const CartPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Order Summary */}
             <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit">
               <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#D81E05]">Order Summary</h2>
               <div className="space-y-3 text-lg">
