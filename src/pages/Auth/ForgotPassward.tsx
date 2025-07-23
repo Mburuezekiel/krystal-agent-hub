@@ -1,4 +1,3 @@
-// src/pages/ForgotPasswordPage.tsx
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -19,16 +18,33 @@ const ForgotPasswordPage: React.FC = () => {
     resolver: zodResolver(forgotPasswordSchema),
   });
 
-  const onSubmit = (data: ForgotPasswordFormValues) => {
-    console.log("Forgot Password Request:", data);
-    // In a real app, you'd send this to your backend to send a reset email
-    alert("Password reset link sent to: " + data.email);
+  const onSubmit = async (data: ForgotPasswordFormValues) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/forgotpassword', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        alert(result.message);
+      } else {
+        alert('Error: ' + (result.message || 'Could not process request.'));
+      }
+    } catch (error) {
+      console.error('Network error during forgot password request:', error);
+      alert('Network error. Please try again.');
+    }
     reset();
   };
 
   return (
     <>
-     
+    
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-3xl font-bold text-center mb-6 text-[#D81E05]">Forgot Your Password?</h1>

@@ -1,7 +1,5 @@
-// src/pages/RegisterPage.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
-
+import { Link, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,26 +15,47 @@ const registerSchema = z.object({
   confirmPassword: z.string().min(6, "Confirm password is required"),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ["confirmPassword"], // path of error
+  path: ["confirmPassword"],
 });
 
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const RegisterPage: React.FC = () => {
+  const navigate = useNavigate();
   const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
-  const onSubmit = (data: RegisterFormValues) => {
-    console.log("Register Data:", data);
-    // In a real app, you'd send this to your registration API
-    alert("Registration attempt for: " + data.email);
+  const onSubmit = async (data: RegisterFormValues) => {
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+
+      const result = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem('userToken', result.token);
+        localStorage.setItem('userName', result.firstName);
+        alert('Registration successful! Welcome, ' + result.firstName);
+        navigate('/');
+      } else {
+        alert('Registration failed: ' + (result.message || 'Please check your input.'));
+      }
+    } catch (error) {
+      console.error('Network error during registration:', error);
+      alert('Network error. Please try again.');
+    }
     reset();
   };
 
   return (
     <>
-   
+     
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-3xl font-bold text-center mb-6 text-[#D81E05]">Create Your Account</h1>
@@ -103,7 +122,7 @@ const RegisterPage: React.FC = () => {
           </p>
         </div>
       </div>
-    
+
     </>
   );
 };
