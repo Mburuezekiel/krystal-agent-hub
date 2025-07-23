@@ -16,6 +16,10 @@ interface CartItem {
   quantity: number;
 }
 
+interface ProductWithQuantity extends Product {
+  quantity: number;
+}
+
 const DUMMY_CHECKOUT_ITEMS: CartItem[] = [
   { productId: 'p1', quantity: 1 },
   { productId: 'p5', quantity: 2 },
@@ -54,10 +58,10 @@ const CheckoutPage: React.FC = () => {
 
   const selectedPaymentMethod = watchPaymentMethod("paymentMethod");
 
-  const [productsInCart, setProductsInCart] = React.useState<Product[]>([]);
+  const [productsInCart, setProductsInCart] = React.useState<ProductWithQuantity[]>([]);
 
   React.useEffect(() => {
-    const fetchedProducts: Product[] = [];
+    const fetchedProducts: ProductWithQuantity[] = [];
     DUMMY_CHECKOUT_ITEMS.forEach(item => {
       const product = getProductById(item.productId);
       if (product) {

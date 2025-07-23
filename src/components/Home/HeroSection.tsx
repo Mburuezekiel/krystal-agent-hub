@@ -60,10 +60,6 @@ const heroSlides: HeroSlide[] = [
 ];
 
 const HeroSection: React.FC = () => {
-  const plugin = React.useRef(
-    Autoplay({ delay: 5000, stopOnInteraction: false }) // CHANGED: Autoplay every 3 seconds
-  );
-
   const [api, setApi] = React.useState<CarouselApi>(); // State to hold the carousel API
   const [current, setCurrent] = React.useState(0);    // State to track current slide index
 
@@ -72,26 +68,25 @@ const HeroSection: React.FC = () => {
       return;
     }
 
-    // Update current slide index on select
-    api.on("select", () => {
-      setCurrent(api.selectedScrollSnap());
-    });
+    setCurrent(api.selectedScrollSnap());
 
-    // Clean up on unmount
+    const onSelect = () => {
+      setCurrent(api.selectedScrollSnap());
+    };
+
+    api.on("select", onSelect);
+
     return () => {
-      api.off("select");
+      api.off("select", onSelect);
     };
   }, [api]);
 
   return (
     <section className="relative w-full overflow-hidden">
       <Carousel
-        plugins={[plugin.current]}
         opts={{
           loop: true,
         }}
-        onMouseEnter={plugin.current.stop}
-        onMouseLeave={plugin.current.play}
         setApi={setApi} // Pass setApi to Carousel to get the API instance
         className="w-full"
       >
