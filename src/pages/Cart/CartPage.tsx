@@ -13,6 +13,7 @@ import {
   Star,
 } from "lucide-react";
 
+// Mock product service
 const getProductById = (id) => {
   const products = {
     p1: {
@@ -51,7 +52,7 @@ const getProductById = (id) => {
         "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=300&h=300&fit=crop",
       rating: 4.8,
       reviews: 76,
-      inStock: false,
+      inStock: false, // This item is out of stock to demonstrate the UI
       brand: "LensMaster",
     },
   };
@@ -59,16 +60,19 @@ const getProductById = (id) => {
 };
 
 const CartPage = () => {
+  // cartItems now only stores productId and quantity, no 'selected' property
   const [cartItems, setCartItems] = useState([
     { productId: "p1", quantity: 1 },
     { productId: "p5", quantity: 2 },
     { productId: "p15", quantity: 1 },
   ]);
 
+  // productsInCart will hold the full product details along with quantity
   const [productsInCart, setProductsInCart] = useState([]);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
 
+  // Effect to fetch product details when cartItems change
   useEffect(() => {
     const fetchedProducts = [];
     cartItems.forEach((item) => {
@@ -80,67 +84,76 @@ const CartPage = () => {
     setProductsInCart(fetchedProducts);
   }, [cartItems]);
 
+  // Function to update quantity of a product in the cart
   const updateQuantity = (productId, delta) => {
     setCartItems((prevItems) =>
       prevItems.map((item) =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) } // Ensure quantity doesn't go below 1
           : item
       )
     );
   };
 
+  // Function to remove an item from the cart
   const removeItem = (productId) => {
     setCartItems((prevItems) =>
       prevItems.filter((item) => item.productId !== productId)
     );
   };
 
+  // Function to apply a promo code
   const applyPromoCode = () => {
     if (promoCode.toUpperCase() === "SAVE10") {
+      // Example promo code
       setPromoApplied(true);
+      // In a real app, you might also clear the promoCode input or show a success message
     } else {
       setPromoApplied(false);
+      // Show an error message for invalid promo code
       console.log("Invalid promo code");
     }
   };
 
+  // Calculate subtotal for all items in the cart (no selection logic)
   const calculateSubtotal = () => {
     return productsInCart.reduce((total, product) => {
+      // Ensure product.price and product.quantity are numbers
       return total + product.price * product.quantity;
     }, 0);
   };
 
+  // Calculate order summary details
   const subtotal = calculateSubtotal();
-  const discount = promoApplied ? subtotal * 0.1 : 0;
-  const shippingCost = subtotal > 5000 ? 0 : 300;
-  const tax = (subtotal - discount) * 0.16;
+  const discount = promoApplied ? subtotal * 0.1 : 0; // 10% discount for SAVE10
+  const shippingCost = subtotal > 5000 ? 0 : 300; // Free shipping over KES 5,000
+  const tax = (subtotal - discount) * 0.16; // 16% VAT
   const total = subtotal - discount + shippingCost + tax;
 
+  // Star Rating component for product reviews
   const StarRating = ({ rating, size = "w-4 h-4" }) => {
     return (
       <div className="flex items-center gap-1">
         {[1, 2, 3, 4, 5].map((star) => (
           <Star
             key={star}
-            className={`${size} ${star <= rating
-                ? "fill-yellow-400 text-yellow-400"
-                : "text-gray-300"
-              }`}
+            className={`${size} ${
+              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+            }`}
           />
         ))}
       </div>
     );
   };
 
+  // Function to handle Web Share API for an individual product
   const handleShareProduct = async (product) => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
-          text: `Check out this product: ${product.name
-            } - KES ${product.price.toLocaleString()}!`,
-          url: window.location.href,
+          text: `Check out this product: ${product.name} - KES ${product.price.toLocaleString()}!`,
+          url: window.location.href, // You might want a specific product URL here in a real app
         });
         console.log("Product shared successfully:", product.name);
       } catch (error) {
@@ -150,15 +163,15 @@ const CartPage = () => {
       console.log(
         "Web Share API not supported in this browser for product sharing."
       );
-      alert(
-        `To share ${product.name}, please copy this link: ${window.location.href}`
-      );
+      // Fallback for browsers that do not support Web Share API
+      alert(`To share ${product.name}, please copy this link: ${window.location.href}`);
     }
   };
 
+  // If the cart is empty, display an empty cart message
   if (productsInCart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20"> {/* Added pb-20 */}
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white rounded-lg shadow-sm p-12">
@@ -185,7 +198,7 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans pb-20"> {/* Added pb-20 for bottom spacing */}
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -241,12 +254,11 @@ const CartPage = () => {
                   return (
                     <div
                       key={product.id}
-                      className={`p-6 ${!product.inStock ? "bg-gray-50 opacity-70" : ""
-                        }`}
+                      className={`p-6 ${
+                        !product.inStock ? "bg-gray-50 opacity-70" : ""
+                      }`}
                     >
                       <div className="flex flex-col sm:flex-row gap-4">
-                        {" "}
-                        {/* Changed to flex-col for better mobile stacking */}
                         {/* Product Image */}
                         <div className="flex-shrink-0">
                           <div className="relative">
@@ -315,8 +327,6 @@ const CartPage = () => {
 
                             {/* Quantity and Actions */}
                             <div className="flex flex-col items-end gap-3 mt-4 sm:mt-0">
-                              {" "}
-                              {/* Added mt-4 for mobile spacing */}
                               {/* Quantity Controls */}
                               {product.inStock ? (
                                 <div className="flex items-center border border-gray-300 rounded-lg">
@@ -350,7 +360,7 @@ const CartPage = () => {
                               )}
                               {/* Action Buttons */}
                               <div className="flex items-center gap-2">
-                                {/* Share button per product */}
+                                {/* Share button per product (icon only) */}
                                 <button
                                   onClick={() => handleShareProduct(product)}
                                   className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -451,18 +461,16 @@ const CartPage = () => {
                   )}
                 </div>
 
-                <div className="flex gap-3 mt-6">
-                  {" "}
-                  {/* This will be your flex container */}
-                  {/* Call Button */}
+                <div className="flex gap-3 mt-6 items-center">
+                  {/* Call Button (icon only, fixed width) */}
                   <a
                     href="tel:+254700282618"
-                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2"
+                    className="flex-none p-3 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors duration-200 flex items-center justify-center"
                     title="Call us for inquiries"
                   >
                     <Phone className="w-5 h-5" />
                   </a>
-                  {/* Checkout Button */}
+                  {/* Checkout Button (takes remaining space) */}
                   <button
                     onClick={() => console.log("Proceeding to checkout")} // Placeholder action
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
