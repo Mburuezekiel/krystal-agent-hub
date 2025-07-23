@@ -1,5 +1,4 @@
-// src/pages/ProfilePage.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -8,18 +7,54 @@ import { Label } from '@/components/ui/label';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { UserCircle, Package, Heart, LogOut, MapPin, Edit } from 'lucide-react'; // Added icons
+import { UserCircle, Package, Heart, LogOut, MapPin, Edit } from 'lucide-react';
 
-// Zod schema for profile editing
+import { useAuth } from '@/context/AuthContext';
+import { getUserProfile, updateUserProfile } from '@/services/userService';
+
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  userName: z.string()
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores, or periods"),
   email: z.string().email("Invalid email address"),
-});
+  phoneNumber: z.string().optional()
+    .refine(val => !val || /^(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}$/.test(val),
+      "Invalid phone number format (e.g., +123 456 7890 or 07XXXXXXXX)"),
+  address: z.string().optional(),
+  password: z.string().optional(),
+  confirmPassword: z.string().optional(),
+})
+.refine(
+  (data) => {
+    if (data.password && data.password.length < 6) {
+      return false;
+    }
+    return true;
+  },
+  {
+    message: "Password must be at least 6 characters",
+    path: ["password"],
+  }
+)
+.refine(
+  (data) => {
+    if (data.password) {
+      return data.confirmPassword === data.password;
+    }
+    return true;
+  },
+  {
+    message: "Passwords don't match",
+    path: ["confirmPassword"],
+  }
+);
+
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-// Dummy data for orders (in a real app, this would come from an API)
 const dummyOrders = [
   { id: 'ORD001', date: '2024-07-15', total: 12500, status: 'Delivered', items: 3 },
   { id: 'ORD002', date: '2024-07-20', total: 8500, status: 'Processing', items: 2 },
@@ -28,59 +63,132 @@ const dummyOrders = [
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
-  const [userName, setUserName] = React.useState('');
-  const [userEmail, setUserEmail] = React.useState('');
-  const [isEditingProfile, setIsEditingProfile] = React.useState(false);
+  const { isLoggedIn, userName: contextUserName, logout, login } = useAuth();
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ProfileFormValues>({
+  const [profile, setProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
+
+  const { register, handleSubmit, formState: { errors }, reset, getValues } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
   });
 
-  // Load user data from localStorage on mount
-  React.useEffect(() => {
-    const storedUserName = localStorage.getItem('userName');
-    const storedUserEmail = localStorage.getItem('userEmail'); // Assuming email is also stored
-    if (storedUserName) {
-      setUserName(storedUserName);
-      // Set default form values for editing
-      reset({
-        firstName: storedUserName.split(' ')[0] || '', // Simple split for mock first name
-        lastName: storedUserName.split(' ')[1] || '',  // Simple split for mock last name
-        email: storedUserEmail || '',
-      });
-    } else {
-      // If no user data, redirect to login
+  useEffect(() => {
+    if (!isLoggedIn) {
       navigate('/login');
+      return;
     }
-  }, [navigate, reset]); // Add reset to dependency array for effect to run when reset is available
 
-  const handleProfileUpdate = (data: ProfileFormValues) => {
-    console.log("Updating Profile:", data);
-    // In a real app, you'd send this to your backend API
-    // If successful, update localStorage and local state
-    localStorage.setItem('userName', `${data.firstName} ${data.lastName}`);
-    localStorage.setItem('userEmail', data.email);
-    setUserName(`${data.firstName} ${data.lastName}`);
-    setUserEmail(data.email);
-    setIsEditingProfile(false); // Exit editing mode
-    alert("Profile updated successfully!"); // Replace with toast/modal
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        const userProfileData = await getUserProfile();
+        setProfile(userProfileData);
+        reset({
+          firstName: userProfileData.firstName,
+          lastName: userProfileData.lastName,
+          userName: userProfileData.userName,
+          email: userProfileData.email,
+          phoneNumber: userProfileData.phoneNumber || '',
+          address: userProfileData.address || '',
+        });
+      } catch (err: any) {
+        console.error('Failed to fetch profile:', err);
+        setError(err.message || 'Could not load profile. Please try again.');
+        if (err.message.includes('token failed') || err.message.includes('No authentication token')) {
+            logout();
+        }
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [isLoggedIn, navigate, reset, logout]);
+
+  const handleProfileUpdate = async (data: ProfileFormValues) => {
+    console.log("Updating Profile with data:", data);
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const updatePayload: any = {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          userName: data.userName,
+          email: data.email,
+          phoneNumber: data.phoneNumber,
+          address: data.address,
+      };
+
+      if (data.password) {
+          updatePayload.password = data.password;
+      }
+
+      const updatedProfile = await updateUserProfile(updatePayload);
+
+      setProfile(updatedProfile);
+      setIsEditingProfile(false);
+
+      if (updatedProfile.userName !== contextUserName) {
+          const currentToken = localStorage.getItem('userToken');
+          if (currentToken) {
+              login(currentToken, updatedProfile.userName);
+          }
+      }
+      alert("Profile updated successfully!");
+    } catch (err: any) {
+      console.error('Error updating profile:', err);
+      setError(err.message || 'Failed to update profile.');
+      alert("Profile update failed: " + (err.message || 'Server error.'));
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('userToken');
-    localStorage.removeItem('userName');
-    localStorage.removeItem('userEmail'); // Clear email too
+    logout();
     navigate('/login');
   };
 
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center text-[#222222]">
+        <h1 className="text-3xl font-bold mb-4">Loading Profile...</h1>
+        <p>Please wait while your profile data is fetched.</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center text-red-500">
+        <h1 className="text-3xl font-bold mb-4">Error Loading Profile</h1>
+        <p>{error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4 bg-[#D81E05] hover:bg-[#A01A04] text-white">
+          Retry
+        </Button>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+        <div className="container mx-auto px-4 py-12 text-center text-[#222222]">
+            <h1 className="text-3xl font-bold mb-4">No Profile Data</h1>
+            <p>Could not retrieve profile information.</p>
+        </div>
+    );
+  }
+
   return (
     <>
-      
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh]">
         <h1 className="text-4xl font-bold text-center mb-8 text-[#D81E05]">My Profile</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Sidebar Navigation */}
           <div className="lg:col-span-1 bg-white p-6 rounded-lg shadow-md h-fit">
             <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#222222]">Account Navigation</h2>
             <nav className="flex flex-col gap-3">
@@ -106,19 +214,36 @@ const ProfilePage: React.FC = () => {
             </nav>
           </div>
 
-          {/* Main Content Area */}
           <div className="lg:col-span-2 bg-white p-6 rounded-lg shadow-md">
-            {/* Profile Overview Section */}
             <div className="mb-10">
               <div className="flex justify-between items-center mb-6 border-b pb-4">
                 <h2 className="text-2xl font-semibold text-[#222222]">Personal Information</h2>
-                <Button variant="outline" size="sm" onClick={() => setIsEditingProfile(!isEditingProfile)} className="border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white">
+                <Button variant="outline" size="sm" onClick={() => {
+                    setIsEditingProfile(!isEditingProfile);
+                    if (isEditingProfile) {
+                      reset({
+                        firstName: profile.firstName,
+                        lastName: profile.lastName,
+                        userName: profile.userName,
+                        email: profile.email,
+                        phoneNumber: profile.phoneNumber || '',
+                        address: profile.address || '',
+                        password: '',
+                        confirmPassword: '',
+                      });
+                    }
+                }} className="border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white">
                   <Edit className="mr-2 h-4 w-4" /> {isEditingProfile ? 'Cancel' : 'Edit Profile'}
                 </Button>
               </div>
 
               {isEditingProfile ? (
                 <form onSubmit={handleSubmit(handleProfileUpdate)} className="space-y-4">
+                  <div>
+                    <Label htmlFor="userName">Username</Label>
+                    <Input id="userName" {...register("userName")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
+                    {errors.userName && <p className="text-red-500 text-sm mt-1">{errors.userName.message}</p>}
+                  </div>
                   <div>
                     <Label htmlFor="firstName">First Name</Label>
                     <Input id="firstName" {...register("firstName")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
@@ -134,20 +259,44 @@ const ProfilePage: React.FC = () => {
                     <Input id="email" type="email" {...register("email")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
                     {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                   </div>
+                  <div>
+                    <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+                    <Input id="phoneNumber" type="tel" {...register("phoneNumber")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
+                    {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="address">Address (Optional)</Label>
+                    <Input id="address" {...register("address")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
+                    {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="password">New Password (Optional)</Label>
+                    <Input id="password" type="password" {...register("password")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" placeholder="Leave blank to keep current" />
+                    {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input id="confirmPassword" type="password" {...register("confirmPassword")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" placeholder="Re-enter new password" />
+                    {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
+                  </div>
                   <Button type="submit" className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md py-2 px-6 font-semibold">
                     Save Changes
                   </Button>
                 </form>
               ) : (
                 <div className="space-y-2 text-lg">
-                  <p><strong>Name:</strong> {userName}</p>
-                  <p><strong>Email:</strong> {userEmail || 'N/A'}</p>
-                  <p><strong>Member Since:</strong> July 2024</p> {/* Dummy data */}
+                  <p><strong>Username:</strong> {profile.userName}</p>
+                  <p><strong>First Name:</strong> {profile.firstName}</p>
+                  <p><strong>Last Name:</strong> {profile.lastName}</p>
+                  <p><strong>Email:</strong> {profile.email}</p>
+                  <p><strong>Phone Number:</strong> {profile.phoneNumber || 'N/A'}</p>
+                  <p><strong>Address:</strong> {profile.address || 'N/A'}</p>
+                
+                  <p><strong>Member Since:</strong> {new Date(profile.createdAt).toLocaleDateString()}</p>
                 </div>
               )}
             </div>
 
-            {/* Order History Section */}
             <div className="mb-10">
               <h2 className="text-2xl font-semibold mb-6 border-b pb-4 text-[#222222]">Order History</h2>
               {dummyOrders.length === 0 ? (
@@ -203,7 +352,6 @@ const ProfilePage: React.FC = () => {
           </div>
         </div>
       </div>
-     
     </>
   );
 };
