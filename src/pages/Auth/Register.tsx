@@ -39,7 +39,6 @@ const RegisterPage: React.FC = () => {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
-    console.log("Data being sent to backend:", data);
 
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
