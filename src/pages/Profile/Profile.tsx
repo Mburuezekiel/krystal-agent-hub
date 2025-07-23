@@ -269,7 +269,7 @@ const ProfilePage: React.FC = () => {
                     <Input id="address" {...register("address")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" />
                     {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
                   </div>
-                  <div>
+                  {/* <div>
                     <Label htmlFor="password">New Password (Optional)</Label>
                     <Input id="password" type="password" {...register("password")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" placeholder="Leave blank to keep current" />
                     {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
@@ -278,7 +278,7 @@ const ProfilePage: React.FC = () => {
                     <Label htmlFor="confirmPassword">Confirm New Password</Label>
                     <Input id="confirmPassword" type="password" {...register("confirmPassword")} className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]" placeholder="Re-enter new password" />
                     {errors.confirmPassword && <p className="text-red-500 text-sm mt-1">{errors.confirmPassword.message}</p>}
-                  </div>
+                  </div> */}
                   <Button type="submit" className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md py-2 px-6 font-semibold">
                     Save Changes
                   </Button>
