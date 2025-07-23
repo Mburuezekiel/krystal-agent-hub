@@ -99,6 +99,10 @@ const CategoryPage: React.FC = () => {
             <Link to="/" className="text-[#D81E05] hover:underline">Home</Link>
             <span className="mx-2">/</span>
           </li>
+          <li className="flex items-center">
+            <Link to="/categories" className="text-[#D81E05] hover:underline">Categories</Link>
+            <span className="mx-2">/</span>
+          </li>
           <li className="flex items-center text-gray-800">
             {categoryName}
           </li>

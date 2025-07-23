@@ -31,6 +31,7 @@ import GiftCardsPage from "./pages/gifts/GiftCardsPage";
 import PrivacyPolicyPage from "./pages/policies/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/policies/TermsOfServicePage";
 import NotFoundPage from "./pages/NotFound";
+import CategoryListPage from "./pages/Product/CategoryList";
 
 const queryClient = new QueryClient();
 
@@ -66,6 +67,7 @@ const App = () => (
           <Route path="/agent/dashboard" element={<AgentDash />} />
 
           <Route path="/product/:id" element={<ProductDetailPage />} />
+          <Route path="/categories" element={<CategoryListPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/new-in" element={<NewArrivalsPage />} />
           <Route path="/sale" element={<SalePage />} />

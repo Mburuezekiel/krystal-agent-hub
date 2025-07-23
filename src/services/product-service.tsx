@@ -650,3 +650,10 @@ export const getPersonalizedRecommendations = (userId?: string, limit: number = 
   const shuffled = allAvailable.sort(() => 0.5 - Math.random());
   return shuffled.slice(0, limit);
 };
+
+// Mock function to get all unique categories
+export const getAllCategories = (): string[] => {
+  // Corrected to use DUMMY_PRODUCTS instead of getAllProducts
+  const categories = [...new Set(DUMMY_PRODUCTS.map(product => product.category))];
+  return categories.sort(); // Sort alphabetically
+};
