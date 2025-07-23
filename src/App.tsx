@@ -1,8 +1,9 @@
+import React, { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -17,7 +18,7 @@ import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CategoryPage from "./pages/Product/CategoryPage";
 import NewArrivalsPage from "./pages/Product/NewArrivalsPage";
 import SalePage from "./pages/Product/SalePage";
-import WishlistPage from './pages/Product/WishlistPage'
+import WishlistPage from "./pages/Product/WishlistPage";
 import ProfilePage from "./pages/Profile/Profile";
 import CartPage from "./pages/Cart/CartPage";
 import CheckoutPage from "./pages/Cart/CheckoutPage";
@@ -31,8 +32,20 @@ import PrivacyPolicyPage from "./pages/policies/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/policies/TermsOfServicePage";
 import NotFoundPage from "./pages/NotFound";
 
-
 const queryClient = new QueryClient();
+
+const ScrollToTopOnNavigate = () => {
+  const location = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+  }, [location.pathname]);
+
+  return null;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -40,15 +53,15 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        <Header/>
+        <ScrollToTopOnNavigate />
+        <Header />
         <Routes>
-          <Route path="/" element={<HomePage/>} />
+          <Route path="/" element={<HomePage />} />
 
-           <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-             <Route path="/forgot-password" element={<ForgotPassword />} />
-               <Route path="/account" element={<ProfilePage />} />
-
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          <Route path="/forgot-password" element={<ForgotPassword />} />
+          <Route path="/account" element={<ProfilePage />} />
 
           <Route path="/agent/dashboard" element={<AgentDash />} />
 
@@ -56,8 +69,8 @@ const App = () => (
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/new-in" element={<NewArrivalsPage />} />
           <Route path="/sale" element={<SalePage />} />
-            <Route path="/wishlist" element={<WishlistPage />} />
-           <Route path="/cart" element={<CartPage />} />       
+          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/faq" element={<FAQPage />} />
@@ -69,13 +82,10 @@ const App = () => (
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
           <Route path="*" element={<NotFoundPage />} />
-
         </Routes>
-      
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>
 );
 
 export default App;
-
