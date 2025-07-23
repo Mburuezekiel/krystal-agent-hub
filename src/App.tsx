@@ -64,7 +64,7 @@ const App = () => (
           <Route path="/forgot-password" element={<ForgotPassword />} />
           <Route path="/account" element={<ProfilePage />} />
 
-         
+          {/* <Route path="/agent/dashboard" element={<AgentDash />} /> */}
 
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/categories" element={<CategoryListPage />} />

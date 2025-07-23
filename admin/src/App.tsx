@@ -1,50 +1,87 @@
-import React, { useEffect } from "react";
-import { Toaster } from "./components/ui/toaster";
-import { Toaster as Sonner } from "./components/ui/sonner";
-import { TooltipProvider } from "./components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-
-import Header from "./components/layout/Header";
-// import Footer from "./components/layout/Footer";
-
-import HomePage from "./pages/landing/Index";
-import NotFoundPage from "./pages/NotFound";
+import React from 'react';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import Layout from './components/layout/Layout';
+import Login from './components/auth/Login';
+import AdminDashboard from './pages/admin/Dashboard';
+import AgentDashboard from './pages/agent/Dashboard';
+import UserManagement from './pages/admin/UserManagement';
+import AgentApproval from './pages/admin/AgentApproval';
 
 const queryClient = new QueryClient();
 
-const ScrollToTopOnNavigate = () => {
-  const location = useLocation();
-
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
-  }, [location.pathname]);
-
-  return null;
+const ProtectedRoute: React.FC<{ children: React.ReactNode; allowedRoles: string[] }> = ({ 
+  children, 
+  allowedRoles 
+}) => {
+  const { isLoggedIn, user } = useAuth();
+  
+  if (!isLoggedIn) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  if (!allowedRoles.includes(user?.role || '')) {
+    return <Navigate to="/unauthorized" replace />;
+  }
+  
+  return <>{children}</>;
 };
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <ScrollToTopOnNavigate />
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
+const AppRoutes: React.FC = () => {
+  const { isLoggedIn, user } = useAuth();
 
-          <Route path="/agent/dashboard" element={<AgentDash />} />
+  if (!isLoggedIn) {
+    return <Login />;
+  }
 
+  return (
+    <Layout>
+      <Routes>
+        <Route path="/" element={
+          <Navigate to={user?.role === 'admin' ? '/admin/dashboard' : '/agent/dashboard'} replace />
+        } />
+        
+        {/* Admin Routes */}
+        <Route path="/admin/dashboard" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/users" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <UserManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/agents" element={
+          <ProtectedRoute allowedRoles={['admin']}>
+            <AgentApproval />
+          </ProtectedRoute>
+        } />
+        
+        {/* Agent Routes */}
+        <Route path="/agent/dashboard" element={
+          <ProtectedRoute allowedRoles={['agent', 'admin']}>
+            <AgentDashboard />
+          </ProtectedRoute>
+        } />
+        
+        <Route path="*" element={<div className="p-6">Page not found</div>} />
+      </Routes>
+    </Layout>
+  );
+};
 
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App: React.FC = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;
