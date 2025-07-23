@@ -22,8 +22,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ALL_CATEGORIES } from '@/services/product-service';
 
-// Removed custom TikTokIcon as Music2Icon is now used for it.
-
 const Header: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
   const [isLoggedIn, setIsLoggedIn] = React.useState(false); // Default to false, will be set from localStorage
@@ -33,7 +31,7 @@ const Header: React.FC = () => {
   // Fetch auth state from localStorage on mount
   React.useEffect(() => {
     const token = localStorage.getItem('userToken');
-    const storedUserName = localStorage.getItem('userName');
+    const storedUserName = localStorage.getItem('userName'); // This should store the FIRST name
     if (token && storedUserName) {
       setIsLoggedIn(true);
       setUserName(storedUserName);
@@ -94,10 +92,12 @@ const Header: React.FC = () => {
             <Instagram className="h-4 w-4" />
           </a>
           <a href="https://www.tiktok.com" target="_blank" rel="noopener noreferrer" aria-label="TikTok" className="text-[#222222] hover:text-[#D81E05] transition-colors">
-            <Music2Icon className="h-4 w-4" /> {/* Changed from TikTokIcon to Music2Icon */}
+            <Music2Icon className="h-4 w-4" />
           </a>
         </div>
       </div>
+
+      
       {/* Main Header */}
       <div className="bg-[#D81E05] shadow-md border-b border-[#A01A04]">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -276,8 +276,10 @@ const Header: React.FC = () => {
             {/* User/Profile Icon with Dropdown (Always visible) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-[#A01A04]">
+                {/* Changed: Display First Name next to User icon when logged in */}
+                <Button variant="ghost" className="text-white hover:bg-[#A01A04] flex items-center px-2 py-1 rounded-md">
                   <User className="h-5 w-5" />
+                  {isLoggedIn && <span className="ml-2 hidden sm:inline-block text-sm font-medium">{userName}</span>}
                   <span className="sr-only">Account</span>
                 </Button>
               </DropdownMenuTrigger>
@@ -296,7 +298,7 @@ const Header: React.FC = () => {
                         <Package className="h-4 w-4" /> Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild className="lg:hidden"> {/* Wishlist for mobile profile dropdown */}
+                    <DropdownMenuItem asChild> {/* Wishlist for mobile profile dropdown */}
                       <Link to="/wishlist" className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                         <Heart className="h-4 w-4" /> Wishlist
                       </Link>

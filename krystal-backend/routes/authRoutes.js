@@ -122,7 +122,7 @@ router.post('/forgotpassword', async (req, res) => {
     });
 
     const mailOptions = {
-      from: 'noreply@krystalstore.com',
+      from: 'inuafund@gmail.com',
       to: user.email,
       subject: 'Krystal Store Password Reset Request',
       html: `<p>You are receiving this because you (or someone else) has requested the reset of a password.</p>
