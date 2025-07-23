@@ -1,4 +1,3 @@
-
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -6,7 +5,11 @@ const UserSchema = new mongoose.Schema({
    userName: {
     type: String,
     required: [true, 'Username is required'],
+    unique: true,
     trim: true,
+    minlength: [3, 'Username must be at least 3 characters long'],
+    maxlength: [20, 'Username cannot be more than 20 characters long'],
+    match: [/^[a-zA-Z0-9_.]+$/, 'Username can only contain letters, numbers, underscores, or periods'],
   },
   firstName: {
     type: String,
@@ -25,6 +28,16 @@ const UserSchema = new mongoose.Schema({
     trim: true,
     lowercase: true,
     match: [/.+@.+\..+/, 'Please enter a valid email address'],
+  },
+  phoneNumber: {
+    type: String,
+    trim: true,
+    sparse: true,
+  },
+  address: {
+    type: String,
+    trim: true,
+    maxlength: [200, 'Address cannot be more than 200 characters'],
   },
   password: {
     type: String,

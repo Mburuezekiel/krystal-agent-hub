@@ -7,10 +7,20 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
+import { useAuth } from '@/context/AuthContext';
+
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
+  userName: z.string() // Already correctly set to 'userName'
+    .min(3, "Username must be at least 3 characters")
+    .max(20, "Username must be at most 20 characters")
+    .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores, or periods"),
   email: z.string().email("Invalid email address"),
+  phoneNumber: z.string().optional()
+    .refine(val => !val || /^(\+?\d{1,3}[-. ]?)?\(?\d{3}\)?[-. ]?\d{3}[-. ]?\d{4}$/.test(val),
+      "Invalid phone number format (e.g., +123 456 7890 or 07XXXXXXXX)"),
+  address: z.string().optional(),
   password: z.string().min(6, "Password must be at least 6 characters"),
   confirmPassword: z.string().min(6, "Confirm password is required"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -22,11 +32,15 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm<RegisterFormValues>({
     resolver: zodResolver(registerSchema),
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    console.log("Data being sent to backend:", data);
+
     try {
       const response = await fetch('http://localhost:5000/api/auth/register', {
         method: 'POST',
@@ -39,9 +53,10 @@ const RegisterPage: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('userToken', result.token);
-        localStorage.setItem('userName', result.firstName);
-        alert('Registration successful! Welcome, ' + result.firstName);
+        // --- THIS IS THE KEY CHANGE ---
+        // Pass result.userName (which comes from your backend) to the login function
+        login(result.token, result.userName);
+        alert('Registration successful! Welcome, ' + result.userName); // Update alert message too
         navigate('/');
       } else {
         alert('Registration failed: ' + (result.message || 'Please check your input.'));
@@ -55,7 +70,6 @@ const RegisterPage: React.FC = () => {
 
   return (
     <>
-     
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-3xl font-bold text-center mb-6 text-[#D81E05]">Create Your Account</h1>
@@ -80,6 +94,17 @@ const RegisterPage: React.FC = () => {
                 {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName.message}</p>}
               </div>
             </div>
+
+            <div>
+              <Label htmlFor="userName">Username</Label> {/* Corrected htmlFor to userName */}
+              <Input
+                id="userName" // Corrected id to userName
+                {...register("userName")} // Corrected register to userName
+                className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]"
+              />
+              {errors.userName && <p className="text-red-500 text-sm mt-1">{errors.userName.message}</p>}
+            </div>
+
             <div>
               <Label htmlFor="email">Email Address</Label>
               <Input
@@ -90,6 +115,28 @@ const RegisterPage: React.FC = () => {
               />
               {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
             </div>
+
+            <div>
+              <Label htmlFor="phoneNumber">Phone Number (Optional)</Label>
+              <Input
+                id="phoneNumber"
+                type="tel"
+                {...register("phoneNumber")}
+                className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]"
+              />
+              {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="address">Address (Optional)</Label>
+              <Input
+                id="address"
+                {...register("address")}
+                className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]"
+              />
+              {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address.message}</p>}
+            </div>
+
             <div>
               <Label htmlFor="password">Password</Label>
               <Input
@@ -122,7 +169,6 @@ const RegisterPage: React.FC = () => {
           </p>
         </div>
       </div>
-
     </>
   );
 };

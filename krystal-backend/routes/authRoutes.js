@@ -1,10 +1,10 @@
 // routes/authRoutes.js
 
 import express from 'express';
-import User from '../models/User.js'; 
-import jwt from 'jsonwebtoken';       
-import crypto from 'crypto';          
- import nodemailer from 'nodemailer'; 
+import User from '../models/User.js';
+import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
+import nodemailer from 'nodemailer';
 
 const router = express.Router();
 
@@ -19,20 +19,31 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 router.post('/register', async (req, res) => {
-  const { firstName, lastName, email, password } = req.body;
+  // Destructure all expected fields, including the new ones
+  const { firstName, lastName, userName, email, phoneNumber, address, password } = req.body;
 
   try {
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
+    // Check if user with this email already exists
+    const emailExists = await User.findOne({ email });
+    if (emailExists) {
       return res.status(400).json({ message: 'User with this email already exists' });
     }
 
-    // Create new user (password hashing handled by pre-save hook in User model)
+    // Check if user with this username already exists (since it's now unique)
+    const usernameExists = await User.findOne({ userName });
+    if (usernameExists) {
+      return res.status(400).json({ message: 'User with this username already exists' });
+    }
+
+    // Create new user with all provided data
+    // Password hashing handled by pre-save hook in User model
     const user = await User.create({
       firstName,
       lastName,
+      userName,      // Include new field
       email,
+      phoneNumber,   // Include new field
+      address,       // Include new field
       password,
     });
 
@@ -42,15 +53,23 @@ router.post('/register', async (req, res) => {
         _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        userName: user.userName, // Also send back username if needed on frontend
         email: user.email,
+        phoneNumber: user.phoneNumber, // Send back if needed
+        address: user.address,       // Send back if needed
         role: user.role,
         token: generateToken(user._id),
       });
     } else {
-      res.status(400).json({ message: 'Invalid user data' });
+      res.status(400).json({ message: 'Invalid user data provided' });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error during user registration:', error);
+    // Mongoose validation errors will have a 'name' of 'ValidationError'
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(val => val.message);
+      return res.status(400).json({ message: messages.join(', ') });
+    }
     res.status(500).json({ message: 'Server error during registration' });
   }
 });
@@ -59,10 +78,12 @@ router.post('/register', async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 router.post('/login', async (req, res) => {
+  // Login can be by email or username, depending on your preference.
+  // For now, keeping it by email as per original code.
   const { email, password } = req.body;
 
   try {
-    // Check if user exists
+    // Check if user exists by email
     const user = await User.findOne({ email });
 
     // Check if user exists and password matches
@@ -71,7 +92,10 @@ router.post('/login', async (req, res) => {
         _id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
+        userName: user.userName, // Include username in login response
         email: user.email,
+        phoneNumber: user.phoneNumber, // Include if needed
+        address: user.address,       // Include if needed
         role: user.role,
         token: generateToken(user._id),
       });
@@ -79,7 +103,7 @@ router.post('/login', async (req, res) => {
       res.status(401).json({ message: 'Invalid email or password' });
     }
   } catch (error) {
-    console.error(error);
+    console.error('Error during user login:', error);
     res.status(500).json({ message: 'Server error during login' });
   }
 });
@@ -89,9 +113,10 @@ router.post('/login', async (req, res) => {
 // @access  Public
 router.post('/forgotpassword', async (req, res) => {
   const { email } = req.body;
+  let user; // Declare user outside try block so it's accessible in catch
 
   try {
-    const user = await User.findOne({ email });
+    user = await User.findOne({ email }); // Assign to the declared user variable
 
     if (!user) {
       // Send a generic success message even if user not found to prevent email enumeration
@@ -108,10 +133,10 @@ router.post('/forgotpassword', async (req, res) => {
     await user.save();
 
     // Construct the reset URL (this would typically be your frontend's reset password page)
-    const resetUrl = `http://localhost:8082/resetpassword/${resetToken}`; 
+    const resetUrl = `http://localhost:8082/resetpassword/${resetToken}`;
 
     // --- In a real application, you would send an email here ---
-    
+
     const transporter = nodemailer.createTransport({
       // Configure your email service (e.g., Gmail, SendGrid, Mailgun)
       service: 'Gmail', // Example
@@ -132,18 +157,22 @@ router.post('/forgotpassword', async (req, res) => {
     };
 
     await transporter.sendMail(mailOptions);
-    
+
     // --- End of email sending section ---
 
-    console.log(`Password reset link (for testing): ${resetUrl}`); 
+    console.log(`Password reset link (for testing): ${resetUrl}`);
     res.status(200).json({ message: 'If a user with that email exists, a password reset link has been sent.' });
 
   } catch (error) {
-    console.error(error);
-    // Clear reset token fields if an error occurs during token generation/saving
-    // user.resetPasswordToken = undefined;
-    // user.resetPasswordExpire = undefined;
-    // await user.save();
+    console.error('Error during password reset request:', error);
+   
+    // Only attempt to clear reset token fields if 'user' was successfully found
+    // and the error occurred during the save operation.
+    if (user && user.resetPasswordToken && user.resetPasswordExpire) { // Check if these fields were set
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save(); // Attempt to save the user without the token
+    }
     res.status(500).json({ message: 'Server error during password reset request' });
   }
 });
@@ -175,7 +204,7 @@ router.put('/resetpassword/:resetToken', async (req, res) => {
     res.status(200).json({ message: 'Password reset successfully' });
 
   } catch (error) {
-    console.error(error);
+    console.error('Error during password reset:', error);
     res.status(500).json({ message: 'Server error during password reset' });
   }
 });

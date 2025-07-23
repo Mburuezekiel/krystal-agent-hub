@@ -59,13 +59,13 @@ const Header: React.FC = () => {
           <div className="flex items-center gap-2">
             <Phone className="h-3 w-3 text-[#D81E05]" />
             <a href="tel:+254712345678" className="hover:text-[#D81E05] transition-colors">
-              +254 712 345 678
+              +254 700 282 618
             </a>
           </div>
           <div className="flex items-center gap-2">
             <Mail className="h-3 w-3 text-[#D81E05]" />
             <a href="mailto:support@krystalstore.com" className="hover:text-[#D81E05] transition-colors">
-              support@krystalstore.com
+              support@krystaltraders.com
             </a>
           </div>
         </div>
@@ -98,7 +98,7 @@ const Header: React.FC = () => {
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] sm:w-[350px] bg-white text-[#222222] border-r border-gray-200 flex flex-col">
               <SheetHeader className="pb-4 border-b border-gray-200">
-                <SheetTitle className="text-[#D81E05] text-2xl font-bold">KRYSTAL STORE</SheetTitle>
+                <SheetTitle className="text-[#D81E05] text-2xl font-bold">KRYSTAL TRADERS</SheetTitle>
                 <SheetDescription className="text-gray-600">
                   Shop the latest trends.
                 </SheetDescription>
@@ -193,7 +193,7 @@ const Header: React.FC = () => {
           {/* On small screens, logo is between menu toggle and action icons */}
           <Link to="/" className="flex flex-col items-center flex-grow flex-shrink-0 lg:flex-row lg:flex-grow-0">
             <span className="font-extrabold text-2xl sm:text-3xl lg:text-3xl text-white tracking-wider leading-none">KRYSTAL</span>
-            <span className="font-normal text-xs sm:text-sm lg:text-base text-white -mt-1 lg:ml-1 lg:mt-0 font-serif">STORE</span>
+            <span className="font-normal text-xs sm:text-sm lg:text-base text-white -mt-1 lg:ml-1 lg:mt-0 font-serif">TRADERS</span>
           </Link>
 
           {/* Search Bar (Desktop) - Hidden on mobile */}

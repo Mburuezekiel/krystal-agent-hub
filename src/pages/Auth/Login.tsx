@@ -39,9 +39,10 @@ const LoginPage: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        // Instead of setting localStorage directly, call the login function from context
-        login(result.token, result.firstName); // Pass token and userName to context
-        alert('Login successful! Welcome, ' + result.firstName);
+        // --- THIS IS THE KEY CHANGE ---
+        // Pass result.userName (which comes from your backend) to the login function
+        login(result.token, result.userName); // <-- Changed from result.firstName
+        alert('Login successful! Welcome, ' + result.userName); // Update alert message too
         navigate('/'); // Redirect to home or dashboard after successful login
       } else {
         alert('Login failed: ' + (result.message || 'Invalid credentials'));
