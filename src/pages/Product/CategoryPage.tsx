@@ -96,18 +96,18 @@ const CategoryPage: React.FC = () => {
 
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen">
+    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24"> {/* Added pb-24 for space at bottom */}
       <nav className="text-sm text-gray-600 mb-6">
-        <ol className="list-none p-0 inline-flex">
+        <ol className="list-none p-0 inline-flex flex-wrap"> {/* Added flex-wrap */}
           <li className="flex items-center">
-            <Link to="/" className="text-[#D81E05] hover:underline">Home</Link>
-            <span className="mx-2">/</span>
+            <Link to="/" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Home</Link> {/* Adjusted font size */}
+            <span className="mx-1 sm:mx-2">/</span> {/* Adjusted margin */}
           </li>
           <li className="flex items-center">
-            <Link to="/categories" className="text-[#D81E05] hover:underline">Categories</Link>
-            <span className="mx-2">/</span>
+            <Link to="/categories" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Categories</Link> {/* Adjusted font size */}
+            <span className="mx-1 sm:mx-2">/</span> {/* Adjusted margin */}
           </li>
-          <li className="flex items-center text-gray-800">
+          <li className="flex items-center text-gray-800 text-xs sm:text-sm"> {/* Adjusted font size */}
             {categoryName}
           </li>
         </ol>
@@ -119,6 +119,7 @@ const CategoryPage: React.FC = () => {
 
       <div className="flex flex-col md:flex-row gap-8">
         <aside className="w-full md:w-64 bg-white p-6 rounded-lg shadow-sm flex-shrink-0 hidden md:block">
+          {/* Desktop Filters (visible on md and larger screens) */}
           <h2 className="text-xl font-semibold mb-6 text-[#222222]">Filters</h2>
 
           <div className="mb-6">
@@ -228,7 +229,8 @@ const CategoryPage: React.FC = () => {
               Showing <span className="font-semibold">{filteredProducts.length}</span> products
             </p>
             <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 w-full sm:w-auto">
-              <div className="flex items-center gap-2">
+              {/* Sort by - visible on medium and larger screens */}
+              <div className="hidden md:flex items-center gap-2"> {/* Hidden on small screens */}
                 <label htmlFor="sort-by" className="text-sm text-gray-600">Sort by:</label>
                 <select
                   id="sort-by"
@@ -243,52 +245,41 @@ const CategoryPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Mobile Filters (hidden on desktop) */}
-              <div className="flex items-center gap-2 md:hidden">
-                <label htmlFor="price-filter" className="text-sm text-gray-600">Price:</label>
-                <select
-                  id="price-filter"
-                  value={selectedPriceRange}
-                  onChange={(e) => setSelectedPriceRange(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors"
-                >
-                  <option value="">All Prices</option>
-                  <option value="under-1000">Under KES 1,000</option>
-                  <option value="1000-5000">KES 1,000 - KES 5,000</option>
-                  <option value="5000-10000">KES 5,000 - KES 10,000</option>
-                  <option value="over-10000">Over KES 10,000</option>
-                </select>
-              </div>
+              {/* Mobile Filters (Price and Brand) - visible on small screens, flex column */}
+              <div className="flex flex-col gap-2 md:hidden w-full"> {/* Flex column on mobile, hidden on desktop */}
+                <div className="flex items-center gap-2 w-full">
+                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600">Price:</label>
+                  <select
+                    id="price-filter-mobile"
+                    value={selectedPriceRange}
+                    onChange={(e) => setSelectedPriceRange(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
+                  >
+                    <option value="">All Prices</option>
+                    <option value="under-1000">Under KES 1,000</option>
+                    <option value="1000-5000">KES 1,000 - KES 5,000</option>
+                    <option value="5000-10000">KES 5,000 - KES 10,000</option>
+                    <option value="over-10000">Over KES 10,000</option>
+                  </select>
+                </div>
 
-              <div className="flex items-center gap-2 md:hidden">
-                <label htmlFor="brand-filter" className="text-sm text-gray-600">Brand:</label>
-                <select
-                  id="brand-filter"
-                  value={selectedBrand}
-                  onChange={(e) => setSelectedBrand(e.target.value)}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors"
-                >
-                  <option value="">All Brands</option>
-                  {uniqueBrands.map(brand => (
-                    <option key={brand} value={brand}>
-                      {brand}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2 md:hidden">
-                <label htmlFor="rating-filter" className="text-sm text-gray-600">Rating:</label>
-                <select
-                  id="rating-filter"
-                  value={selectedRating}
-                  onChange={(e) => setSelectedRating(Number(e.target.value))}
-                  className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors"
-                >
-                  <option value="0">All Ratings</option>
-                  <option value="4">4 Stars & Up</option>
-                  <option value="3">3 Stars & Up</option>
-                </select>
+                <div className="flex items-center gap-2 w-full">
+                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600">Brand:</label>
+                  <select
+                    id="brand-filter-mobile"
+                    value={selectedBrand}
+                    onChange={(e) => setSelectedBrand(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
+                  >
+                    <option value="">All Brands</option>
+                    {uniqueBrands.map(brand => (
+                      <option key={brand} value={brand}>
+                        {brand}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {/* Rating filter removed from mobile view as per request */}
               </div>
             </div>
           </div>
