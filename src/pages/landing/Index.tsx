@@ -5,7 +5,7 @@ import TrendingCategoriesSection from '@/components/Home/TrendingCategoriesSecti
 import PromotionsSection from '@/components/Home/PromotionsSection';
 import CommunitySocialProofSection from '@/components/Home/CommunitySocialProofSection';
 import { Separator } from '@/components/ui/separator';
-
+import Footer from "@/components/layout/Footer";
 
 export default function HomePage() {
   return (
@@ -21,7 +21,7 @@ export default function HomePage() {
           <CommunitySocialProofSection />
         </section>
       </main>
-    
+    <Footer/>
     </div>
   );
 }

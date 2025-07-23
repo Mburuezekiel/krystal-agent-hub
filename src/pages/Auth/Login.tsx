@@ -7,6 +7,9 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
+// Import the useAuth hook
+import { useAuth } from '@/context/AuthContext'; // Adjust path if necessary
+
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
   password: z.string().min(6, "Password must be at least 6 characters"),
@@ -15,14 +18,17 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
+  // Destructure the 'login' function from the useAuth hook
+  const { login } = useAuth();
+
   const { register, handleSubmit, formState: { errors }, reset } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
   });
 
   const onSubmit = async (data: LoginFormValues) => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', { 
+      const response = await fetch('http://localhost:5000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -33,10 +39,10 @@ const LoginPage: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        localStorage.setItem('userToken', result.token);
-        localStorage.setItem('userName', result.firstName);
+        // Instead of setting localStorage directly, call the login function from context
+        login(result.token, result.firstName); // Pass token and userName to context
         alert('Login successful! Welcome, ' + result.firstName);
-        navigate('/');
+        navigate('/'); // Redirect to home or dashboard after successful login
       } else {
         alert('Login failed: ' + (result.message || 'Invalid credentials'));
       }
@@ -49,7 +55,6 @@ const LoginPage: React.FC = () => {
 
   return (
     <>
-      
       <div className="container mx-auto px-4 py-12 text-[#222222] bg-[#F8F8F8] min-h-[70vh] flex items-center justify-center">
         <div className="max-w-md w-full bg-white p-8 rounded-lg shadow-md border border-gray-200">
           <h1 className="text-3xl font-bold text-center mb-6 text-[#D81E05]">Login to Krystal Store</h1>
@@ -91,7 +96,6 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
       </div>
-   
     </>
   );
 };

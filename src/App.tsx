@@ -1,24 +1,18 @@
-// src/App.tsx
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-// Layout Components
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
 
-// Main Homepage
-import HomePage from "./pages/landing/Index"; // Corrected path for HomePage
+import HomePage from "./pages/landing/Index";
 
-// Admin Page (from your existing code)
 import AgentDash from "./pages/Admin/Index";
-// auth 
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 import ForgotPassword from "./pages/Auth/ForgotPassward";
-// Placeholder Pages (newly added)
 import ProductDetailPage from "./pages/Product/ProductDetailPage";
 import CategoryPage from "./pages/Product/CategoryPage";
 import NewArrivalsPage from "./pages/Product/NewArrivalsPage";
@@ -35,7 +29,7 @@ import SizeGuidePage from "./pages/guide/SizeGuidePage";
 import GiftCardsPage from "./pages/gifts/GiftCardsPage";
 import PrivacyPolicyPage from "./pages/policies/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/policies/TermsOfServicePage";
-import NotFoundPage from "./pages/NotFound"; // Corrected import for NotFound page
+import NotFoundPage from "./pages/NotFound";
 
 
 const queryClient = new QueryClient();
@@ -46,12 +40,10 @@ const App = () => (
       <Toaster />
       <Sonner />
       <BrowserRouter>
-        {/* Header and Footer are placed outside <Routes> so they appear on all pages */}
         <Header/>
         <Routes>
           <Route path="/" element={<HomePage/>} />
 
-          {/* AuthRoutes  */}
            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
              <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -60,7 +52,6 @@ const App = () => (
 
           <Route path="/agent/dashboard" element={<AgentDash />} />
 
-          {/* E-commerce Specific Pages */}
           <Route path="/product/:id" element={<ProductDetailPage />} />
           <Route path="/category/:name" element={<CategoryPage />} />
           <Route path="/new-in" element={<NewArrivalsPage />} />
@@ -77,11 +68,10 @@ const App = () => (
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms-of-service" element={<TermsOfServicePage />} />
 
-          {/* Catch-all route for 404 - make sure this is the last route */}
           <Route path="*" element={<NotFoundPage />} />
 
         </Routes>
-        <Footer/>
+      
       </BrowserRouter>
     </TooltipProvider>
   </QueryClientProvider>

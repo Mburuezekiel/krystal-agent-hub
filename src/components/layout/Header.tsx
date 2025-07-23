@@ -1,4 +1,3 @@
-// src/components/layout/Header.tsx
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom'; // Import useNavigate for redirects
 import { Button } from '@/components/ui/button';
@@ -22,24 +21,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ALL_CATEGORIES } from '@/services/product-service';
 
+// Import the useAuth hook
+import { useAuth } from '@/context/AuthContext';
+
 const Header: React.FC = () => {
   const [isSheetOpen, setIsSheetOpen] = React.useState(false);
-  const [isLoggedIn, setIsLoggedIn] = React.useState(false); // Default to false, will be set from localStorage
-  const [userName, setUserName] = React.useState(""); // Default to empty, will be set from localStorage
   const navigate = useNavigate(); // Hook for navigation
 
-  // Fetch auth state from localStorage on mount
-  React.useEffect(() => {
-    const token = localStorage.getItem('userToken');
-    const storedUserName = localStorage.getItem('userName'); // This should store the FIRST name
-    if (token && storedUserName) {
-      setIsLoggedIn(true);
-      setUserName(storedUserName);
-    } else {
-      setIsLoggedIn(false);
-      setUserName("");
-    }
-  }, []); // Empty dependency array means this runs once on mount
+  // Use the authentication context to get login state and user info
+  const { isLoggedIn, userName, logout } = useAuth();
 
   // Filter out "New In" and "Sale" as they have dedicated sections/routes
   const mainCategories = ALL_CATEGORIES.filter(
@@ -50,10 +40,7 @@ const Header: React.FC = () => {
   const closeSheet = () => setIsSheetOpen(false);
 
   const handleLogout = () => {
-    localStorage.removeItem('userToken'); // Remove token from localStorage
-    localStorage.removeItem('userName'); // Remove user name from localStorage
-    setIsLoggedIn(false); // Update local state
-    setUserName(""); // Update local state
+    logout(); // Call the logout function from AuthContext
     closeSheet(); // Close the mobile sheet if open
     navigate('/login'); // Redirect to login page
   };
@@ -97,7 +84,7 @@ const Header: React.FC = () => {
         </div>
       </div>
 
-      
+
       {/* Main Header */}
       <div className="bg-[#D81E05] shadow-md border-b border-[#A01A04]">
         <div className="container mx-auto px-4 py-3 flex items-center justify-between gap-4">
@@ -276,7 +263,7 @@ const Header: React.FC = () => {
             {/* User/Profile Icon with Dropdown (Always visible) */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                {/* Changed: Display First Name next to User icon when logged in */}
+                {/* Display First Name next to User icon when logged in */}
                 <Button variant="ghost" className="text-white hover:bg-[#A01A04] flex items-center px-2 py-1 rounded-md">
                   <User className="h-5 w-5" />
                   {isLoggedIn && <span className="ml-2 hidden sm:inline-block text-sm font-medium">{userName}</span>}
@@ -298,7 +285,7 @@ const Header: React.FC = () => {
                         <Package className="h-4 w-4" /> Orders
                       </Link>
                     </DropdownMenuItem>
-                    <DropdownMenuItem asChild> {/* Wishlist for mobile profile dropdown */}
+                    <DropdownMenuItem asChild>
                       <Link to="/wishlist" className="flex items-center gap-2 cursor-pointer hover:bg-gray-100 py-2 px-2 rounded-md">
                         <Heart className="h-4 w-4" /> Wishlist
                       </Link>
