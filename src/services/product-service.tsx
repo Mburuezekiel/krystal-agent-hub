@@ -429,7 +429,7 @@ const DUMMY_PRODUCTS: Product[] = [
     id: 'p41', name: 'Electric Toothbrush', price: 4500,
     imageUrl: 'https://placehold.co/400x500/4682B4/FFFFFF?text=Electric+Toothbrush', category: 'Beauty & Health',
     description: 'Advanced electric toothbrush for superior cleaning. Features multiple brushing modes and a long-lasting battery.',
-    brand: 'OralCare', stock: 20, rating: 4.7, numReviews: 100,
+    brand: 'OralCare', stock: 0, rating: 4.7, numReviews: 100,
     images: [
       'https://placehold.co/400x500/4682B4/FFFFFF?text=Electric+Toothbrush',
       'https://placehold.co/400x500/5F9EA0/FFFFFF?text=Toothbrush+View+2'

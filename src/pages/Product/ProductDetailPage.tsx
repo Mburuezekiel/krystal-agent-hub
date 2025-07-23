@@ -1,62 +1,49 @@
-// src/pages/ProductDetailPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-// Assuming these services and components exist in your project
 import { getProductById, getProductsByCategory, Product } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, Share2 } from 'lucide-react';
 
-// Extend Product interface for more details (assuming product-service provides these)
 interface DetailedProduct extends Product {
   description: string;
-  brand: string; // Made mandatory based on product-service update
-  stock: number; // Quantity in stock
-  rating: number; // Average rating (e.g., 4.5)
-  numReviews: number; // Number of reviews
-  images: string[]; // Array of image URLs for gallery
-  specifications: { [key: string]: string }; // Key-value pairs for specs
-  // relatedProducts will be dynamically determined based on category
+  brand: string;
+  stock: number;
+  rating: number;
+  numReviews: number;
+  images: string[];
+  specifications: { [key: string]: string };
 }
 
-// Function to manage wishlist in localStorage (or a more persistent store)
 const addProductToWishlist = (product: Product) => {
   const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
   if (!wishlist.some((item: Product) => item.id === product.id)) {
     wishlist.push(product);
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    return true; // Item added
+    return true;
   }
-  return false; // Item already exists
+  return false;
 };
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  // Cast the product to DetailedProduct to access new properties
   const product: DetailedProduct | undefined = getProductById(id || '') as DetailedProduct;
 
-  // State for selected image in the gallery
   const [mainImage, setMainImage] = useState<string>(product?.imageUrl || '');
-  // State for quantity selector
   const [quantity, setQuantity] = useState<number>(1);
-  // State for related products
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
 
-  // Update main image and reset quantity when product changes
   useEffect(() => {
     if (product) {
       setMainImage(product.imageUrl);
-      setQuantity(1); // Reset quantity when product changes
-      // Fetch related products from the same category, excluding the current product
+      setQuantity(1);
       const productsInSameCategory = getProductsByCategory(product.category);
-      // Filter out products that are the same brand for more variety in related products
       const filteredRelated = productsInSameCategory
         .filter(p => p.id !== product.id && p.brand !== product.brand)
-        .sort(() => 0.5 - Math.random()) // Shuffle for variety
-        .slice(0, 5); // Limit to 5 related products for display
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5);
 
-      // If less than 5 related products from different brands, fill with general recommendations
       if (filteredRelated.length < 5) {
         const allOtherProducts = getProductsByCategory(product.category)
           .filter(p => p.id !== product.id && !filteredRelated.some(fp => fp.id === p.id))
@@ -80,7 +67,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Helper function to render star ratings
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -98,7 +84,6 @@ const ProductDetailPage: React.FC = () => {
     return <div className="flex">{stars}</div>;
   };
 
-  // Handle adding product to wishlist
   const handleAddToWishlist = () => {
     if (addProductToWishlist(product)) {
       alert(`"${product.name}" added to your wishlist!`);
@@ -107,24 +92,20 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
-  // Handle sharing product (using Web Share API)
   const handleShare = async () => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
           text: `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}...`,
-          url: window.location.href, // Current product page URL
-          // files: [new File([await fetch(mainImage).then(res => res.blob())], 'product-image.png', { type: 'image/png' })] // For sharing images, might need more complex handling for cross-origin images
+          url: window.location.href,
         });
         console.log('Product shared successfully');
       } catch (error) {
         console.error('Error sharing product:', error);
-        // Fallback for user cancellation or other errors
         alert('Could not share product. Please try again.');
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       const shareText = `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}... ${window.location.href}`;
       navigator.clipboard.writeText(shareText)
         .then(() => alert('Product link and details copied to clipboard!'))
@@ -134,11 +115,14 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen">
-      {/* Breadcrumb Navigation */}
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex">
           <li className="flex items-center">
             <Link to="/" className="text-[#D81E05] hover:underline">Home</Link>
+            <span className="mx-2">/</span>
+          </li>
+          <li className="flex items-center">
+            <Link to="/categories" className="text-[#D81E05] hover:underline">Categories</Link>
             <span className="mx-2">/</span>
           </li>
           <li className="flex items-center">
@@ -153,13 +137,11 @@ const ProductDetailPage: React.FC = () => {
         </ol>
       </nav>
 
-      {/* Product Main Section */}
       <div className="bg-white rounded-lg shadow-md p-6 md:p-8 flex flex-col md:flex-row gap-8 lg:gap-12">
-        {/* Product Image Gallery */}
         <div className="md:w-1/2 flex flex-col items-center">
           <div className="w-full max-w-md aspect-square bg-gray-100 rounded-lg overflow-hidden mb-4 shadow-sm">
             <img
-              src={mainImage || product.imageUrl} // Fallback to main imageUrl if mainImage state is empty
+              src={mainImage || product.imageUrl}
               alt={product.name}
               className="w-full h-full object-contain"
               onError={(e) => {
@@ -191,11 +173,9 @@ const ProductDetailPage: React.FC = () => {
           )}
         </div>
 
-        {/* Product Details */}
         <div className="md:w-1/2">
           <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#222222]">{product.name}</h1>
 
-          {/* Ratings */}
           {product.rating !== undefined && product.numReviews !== undefined && (
             <div className="flex items-center mb-4">
               {renderStars(product.rating)}
@@ -203,7 +183,6 @@ const ProductDetailPage: React.FC = () => {
             </div>
           )}
 
-          {/* Price */}
           <div className="flex items-baseline gap-2 mb-4">
             <p className="text-3xl font-bold text-[#D81E05]">KES {product.price.toFixed(2)}</p>
             {product.oldPrice && (
@@ -211,14 +190,12 @@ const ProductDetailPage: React.FC = () => {
             )}
           </div>
 
-          {/* Availability */}
           {product.stock !== undefined && (
             <p className={`text-sm font-semibold mb-4 ${product.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
               {product.stock > 0 ? `In Stock (${product.stock} available)` : 'Out of Stock'}
             </p>
           )}
 
-          {/* Brand & Category */}
           <p className="text-gray-700 text-sm mb-2">
             <span className="font-semibold">Brand:</span> {product.brand || 'N/A'}
           </p>
@@ -226,7 +203,6 @@ const ProductDetailPage: React.FC = () => {
             <span className="font-semibold">Category:</span> {product.category}
           </p>
 
-          {/* Quantity Selector */}
           <div className="flex items-center gap-4 mb-6">
             <label htmlFor="quantity" className="text-lg font-semibold text-[#222222]">Quantity:</label>
             <div className="flex items-center border border-gray-300 rounded-md">
@@ -243,7 +219,7 @@ const ProductDetailPage: React.FC = () => {
                 onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
                 className="w-16 text-center border-x border-gray-300 py-1 text-lg"
                 min="1"
-                max={product.stock || 99} // Set max based on stock if available
+                max={product.stock || 99}
               />
               <button
                 onClick={() => setQuantity(prev => (product.stock && prev >= product.stock) ? prev : prev + 1)}
@@ -254,7 +230,6 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Action Buttons: Add to Cart, Wishlist, Share */}
           <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Button
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
@@ -280,7 +255,6 @@ const ProductDetailPage: React.FC = () => {
             </Button>
           </div>
 
-          {/* Delivery & Returns (Mock sections) */}
           <div className="mt-8 border-t border-gray-200 pt-6">
             <h3 className="text-xl font-semibold mb-4 text-[#222222]">Delivery & Returns</h3>
             <div className="space-y-3 text-gray-700 text-sm">
@@ -295,7 +269,6 @@ const ProductDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Product Description and Specifications */}
       <div className="bg-white rounded-lg shadow-md p-6 md:p-8 mt-8">
         <h2 className="text-2xl font-bold mb-4 text-[#222222]">Product Details</h2>
         <p className="text-gray-700 leading-relaxed mb-6">
@@ -316,7 +289,6 @@ const ProductDetailPage: React.FC = () => {
         )}
       </div>
 
-      {/* You Might Also Like Section */}
       {relatedProducts.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-center mb-6 text-[#222222]">You Might Also Like</h2>
