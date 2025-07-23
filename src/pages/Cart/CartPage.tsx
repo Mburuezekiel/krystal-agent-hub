@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, X, Heart, ArrowLeft, Shield, Truck, RotateCcw, Star } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, Trash2, Share2, Phone, ArrowLeft, Shield, Truck, RotateCcw, Star } from 'lucide-react';
 
 // Mock product service
 const getProductById = (id) => {
@@ -37,7 +37,7 @@ const getProductById = (id) => {
       imageUrl: 'https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=300&h=300&fit=crop',
       rating: 4.8,
       reviews: 76,
-      inStock: false,
+      inStock: false, // This item is out of stock to demonstrate the UI
       brand: 'LensMaster'
     }
   };
@@ -45,105 +45,74 @@ const getProductById = (id) => {
 };
 
 const CartPage = () => {
+  // cartItems now only stores productId and quantity, no 'selected' property
   const [cartItems, setCartItems] = useState([
-    { productId: 'p1', quantity: 1, selected: true },
-    { productId: 'p5', quantity: 2, selected: true },
-    { productId: 'p15', quantity: 1, selected: false },
+    { productId: 'p1', quantity: 1 },
+    { productId: 'p5', quantity: 2 },
+    { productId: 'p15', quantity: 1 },
   ]);
   
+  // productsInCart will hold the full product details along with quantity
   const [productsInCart, setProductsInCart] = useState([]);
-  const [selectAll, setSelectAll] = useState(false);
-  const [savedForLater, setSavedForLater] = useState([]);
   const [promoCode, setPromoCode] = useState('');
   const [promoApplied, setPromoApplied] = useState(false);
 
+  // Effect to fetch product details when cartItems change
   useEffect(() => {
     const fetchedProducts = [];
     cartItems.forEach(item => {
       const product = getProductById(item.productId);
       if (product) {
-        fetchedProducts.push({ ...product, quantity: item.quantity, selected: item.selected });
+        fetchedProducts.push({ ...product, quantity: item.quantity });
       }
     });
     setProductsInCart(fetchedProducts);
   }, [cartItems]);
 
-  useEffect(() => {
-    const allSelected = cartItems.every(item => item.selected);
-    setSelectAll(allSelected && cartItems.length > 0);
-  }, [cartItems]);
-
+  // Function to update quantity of a product in the cart
   const updateQuantity = (productId, delta) => {
     setCartItems(prevItems =>
       prevItems.map(item =>
         item.productId === productId
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) }
+          ? { ...item, quantity: Math.max(1, item.quantity + delta) } // Ensure quantity doesn't go below 1
           : item
       )
     );
   };
 
+  // Function to remove an item from the cart
   const removeItem = (productId) => {
     setCartItems(prevItems => prevItems.filter(item => item.productId !== productId));
   };
 
-  const toggleItemSelection = (productId) => {
-    setCartItems(prevItems =>
-      prevItems.map(item =>
-        item.productId === productId
-          ? { ...item, selected: !item.selected }
-          : item
-      )
-    );
-  };
-
-  const toggleSelectAll = () => {
-    const newSelectAll = !selectAll;
-    setSelectAll(newSelectAll);
-    setCartItems(prevItems =>
-      prevItems.map(item => ({ ...item, selected: newSelectAll }))
-    );
-  };
-
-  const saveForLater = (productId) => {
-    const item = cartItems.find(item => item.productId === productId);
-    if (item) {
-      setSavedForLater(prev => [...prev, item]);
-      removeItem(productId);
-    }
-  };
-
-  const moveToCart = (productId) => {
-    const item = savedForLater.find(item => item.productId === productId);
-    if (item) {
-      setCartItems(prev => [...prev, { ...item, selected: true }]);
-      setSavedForLater(prev => prev.filter(item => item.productId !== productId));
-    }
-  };
-
+  // Function to apply a promo code
   const applyPromoCode = () => {
-    if (promoCode.toUpperCase() === 'SAVE10') {
+    if (promoCode.toUpperCase() === 'SAVE10') { // Example promo code
       setPromoApplied(true);
+      // In a real app, you might also clear the promoCode input or show a success message
+    } else {
+      setPromoApplied(false);
+      // Show an error message for invalid promo code
+      console.log("Invalid promo code");
     }
   };
 
+  // Calculate subtotal for all items in the cart (no selection logic)
   const calculateSubtotal = () => {
     return productsInCart.reduce((total, product) => {
-      if (product.selected) {
-        const itemInCart = cartItems.find(item => item.productId === product.id);
-        return total + (product.price * (itemInCart?.quantity || 0));
-      }
-      return total;
+      // Ensure product.price and product.quantity are numbers
+      return total + (product.price * product.quantity);
     }, 0);
   };
 
-  const selectedItemsCount = cartItems.filter(item => item.selected).length;
+  // Calculate order summary details
   const subtotal = calculateSubtotal();
-  const discount = promoApplied ? subtotal * 0.1 : 0;
-  const shippingCost = subtotal > 5000 ? 0 : 300;
+  const discount = promoApplied ? subtotal * 0.1 : 0; // 10% discount for SAVE10
+  const shippingCost = subtotal > 5000 ? 0 : 300; // Free shipping over KES 5,000
   const tax = (subtotal - discount) * 0.16; // 16% VAT
   const total = subtotal - discount + shippingCost + tax;
 
+  // Star Rating component for product reviews
   const StarRating = ({ rating, size = "w-4 h-4" }) => {
     return (
       <div className="flex items-center gap-1">
@@ -157,9 +126,35 @@ const CartPage = () => {
     );
   };
 
-  if (productsInCart.length === 0 && savedForLater.length === 0) {
+  // Function to handle Web Share API
+  const handleShareCart = async () => {
+    if (navigator.share) {
+      try {
+        const cartDetails = productsInCart.map(product => 
+          `${product.name} (Qty: ${product.quantity}) - KES ${product.price.toLocaleString()}`
+        ).join('\n');
+        
+        await navigator.share({
+          title: 'My Shopping Cart',
+          text: `Check out my items from the shopping cart:\n\n${cartDetails}\n\nTotal: KES ${total.toLocaleString()}`,
+          url: window.location.href, // Share current page URL
+        });
+        console.log('Cart shared successfully');
+      } catch (error) {
+        console.error('Error sharing cart:', error);
+      }
+    } else {
+      // Fallback for browsers that do not support Web Share API
+      console.log('Web Share API not supported in this browser.');
+      // You could implement a custom share modal here
+      alert('Your browser does not support sharing. Please copy the link manually.');
+    }
+  };
+
+  // If the cart is empty, display an empty cart message
+  if (productsInCart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white rounded-lg shadow-sm p-12">
@@ -168,7 +163,11 @@ const CartPage = () => {
               <p className="text-gray-600 mb-8 text-lg">
                 Looks like you haven't added any items to your cart yet. Start shopping to fill it up!
               </p>
-              <button className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200">
+              <button 
+                onClick={() => console.log("Navigating to shopping page")} // Placeholder action
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200"
+                title="Start browsing products"
+              >
                 Start Shopping
               </button>
             </div>
@@ -179,13 +178,17 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 font-sans">
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <button className="lg:hidden p-2 hover:bg-gray-100 rounded-lg">
+              <button 
+                className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
+                onClick={() => console.log("Go back")} // Placeholder action
+                title="Go back to previous page"
+              >
                 <ArrowLeft className="w-5 h-5" />
               </button>
               <h1 className="text-2xl font-bold text-gray-900">Shopping Cart</h1>
@@ -194,11 +197,11 @@ const CartPage = () => {
               </span>
             </div>
             <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" title="Secure and encrypted checkout process">
                 <Shield className="w-4 h-4" />
                 Secure Checkout
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2" title="Enjoy free shipping on orders above KES 5,000">
                 <Truck className="w-4 h-4" />
                 Free Shipping over KES 5,000
               </div>
@@ -211,58 +214,19 @@ const CartPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Cart Section */}
           <div className="lg:col-span-3 space-y-6">
-            {/* Select All & Bulk Actions */}
-            <div className="bg-white rounded-lg shadow-sm p-4">
-              <div className="flex items-center justify-between">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={selectAll}
-                    onChange={toggleSelectAll}
-                    className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                  />
-                  <span className="font-medium text-gray-900">
-                    Select All ({cartItems.length} items)
-                  </span>
-                </label>
-                <div className="flex items-center gap-4 text-sm">
-                  <button 
-                    className="text-red-600 hover:text-red-700 font-medium"
-                    onClick={() => {
-                      const selectedItems = cartItems.filter(item => item.selected);
-                      selectedItems.forEach(item => removeItem(item.productId));
-                    }}
-                  >
-                    Delete Selected
-                  </button>
-                  <button className="text-gray-600 hover:text-gray-700 font-medium">
-                    Save for Later
-                  </button>
-                </div>
-              </div>
-            </div>
+            {/* No "Select All" or "Bulk Actions" section anymore */}
 
             {/* Cart Items */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="divide-y divide-gray-200">
                 {productsInCart.map(product => {
                   const itemQuantity = cartItems.find(item => item.productId === product.id)?.quantity || 0;
-                  const isSelected = cartItems.find(item => item.productId === product.id)?.selected || false;
                   const savings = product.originalPrice - product.price;
                   
                   return (
-                    <div key={product.id} className={`p-6 ${!product.inStock ? 'bg-gray-50' : ''}`}>
+                    <div key={product.id} className={`p-6 ${!product.inStock ? 'bg-gray-50 opacity-70' : ''}`}>
                       <div className="flex gap-4">
-                        {/* Checkbox */}
-                        <div className="flex items-start pt-2">
-                          <input
-                            type="checkbox"
-                            checked={isSelected}
-                            onChange={() => toggleItemSelection(product.id)}
-                            className="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500"
-                            disabled={!product.inStock}
-                          />
-                        </div>
+                        {/* No Checkbox anymore */}
 
                         {/* Product Image */}
                         <div className="flex-shrink-0">
@@ -325,12 +289,13 @@ const CartPage = () => {
                             {/* Quantity and Actions */}
                             <div className="flex flex-col items-end gap-3">
                               {/* Quantity Controls */}
-                              {product.inStock && (
+                              {product.inStock ? (
                                 <div className="flex items-center border border-gray-300 rounded-lg">
                                   <button
                                     onClick={() => updateQuantity(product.id, -1)}
-                                    className="p-2 hover:bg-gray-100"
+                                    className="p-2 hover:bg-gray-100 rounded-l-lg transition-colors"
                                     disabled={itemQuantity <= 1}
+                                    title="Decrease quantity"
                                   >
                                     <Minus className="w-4 h-4" />
                                   </button>
@@ -339,28 +304,25 @@ const CartPage = () => {
                                   </span>
                                   <button
                                     onClick={() => updateQuantity(product.id, 1)}
-                                    className="p-2 hover:bg-gray-100"
+                                    className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors"
+                                    title="Increase quantity"
                                   >
                                     <Plus className="w-4 h-4" />
                                   </button>
                                 </div>
+                              ) : (
+                                <div className="text-gray-500 text-sm italic">Cannot add out of stock items</div>
                               )}
 
                               {/* Action Buttons */}
                               <div className="flex items-center gap-2">
-                                <button
-                                  onClick={() => saveForLater(product.id)}
-                                  className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="Save for later"
-                                >
-                                  <Heart className="w-5 h-5" />
-                                </button>
+                                {/* No Heart icon (Save for Later) */}
                                 <button
                                   onClick={() => removeItem(product.id)}
                                   className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                                  title="Remove item"
+                                  title="Remove item from cart"
                                 >
-                                  <X className="w-5 h-5" />
+                                  <Trash2 className="w-5 h-5" /> {/* Replaced X with Trash2 */}
                                 </button>
                               </div>
                             </div>
@@ -373,38 +335,7 @@ const CartPage = () => {
               </div>
             </div>
 
-            {/* Saved for Later */}
-            {savedForLater.length > 0 && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Saved for Later ({savedForLater.length} items)
-                </h2>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {savedForLater.map(item => {
-                    const product = getProductById(item.productId);
-                    return (
-                      <div key={item.productId} className="border border-gray-200 rounded-lg p-4">
-                        <img 
-                          src={product.imageUrl} 
-                          alt={product.name}
-                          className="w-full h-32 object-cover rounded-lg mb-3"
-                        />
-                        <h3 className="font-medium text-gray-900 mb-2 line-clamp-2">{product.name}</h3>
-                        <p className="text-lg font-bold text-gray-900 mb-3">
-                          KES {product.price.toLocaleString()}
-                        </p>
-                        <button
-                          onClick={() => moveToCart(item.productId)}
-                          className="w-full bg-red-600 hover:bg-red-700 text-white py-2 rounded-lg font-medium transition-colors"
-                        >
-                          Move to Cart
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
+            {/* No "Saved for Later" section anymore */}
           </div>
 
           {/* Order Summary Sidebar */}
@@ -415,7 +346,7 @@ const CartPage = () => {
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span>Items ({selectedItemsCount}):</span>
+                    <span>Items ({cartItems.length}):</span> {/* Displays count of all items */}
                     <span>KES {subtotal.toLocaleString()}</span>
                   </div>
                   
@@ -455,10 +386,12 @@ const CartPage = () => {
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      title="Enter a promotional code to get a discount"
                     />
                     <button
                       onClick={applyPromoCode}
                       className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                      title="Apply the entered promo code"
                     >
                       Apply
                     </button>
@@ -468,30 +401,55 @@ const CartPage = () => {
                   )}
                 </div>
 
+                {/* Share and Call Buttons */}
+                <div className="flex flex-col sm:flex-row gap-3 mt-6">
+                  <button 
+                    onClick={handleShareCart}
+                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2"
+                    title="Share your cart details with others"
+                  >
+                    <Share2 className="w-5 h-5" /> Share Cart
+                  </button>
+                  <a 
+                    href="tel:+254700282618"
+                    className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2"
+                    title="Call us for inquiries"
+                  >
+                    <Phone className="w-5 h-5" /> Call for Enquiry
+                  </a>
+                </div>
+
+
                 {/* Checkout Button */}
                 <button 
+                  onClick={() => console.log("Proceeding to checkout")} // Placeholder action
                   className="w-full mt-6 bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                  disabled={selectedItemsCount === 0}
+                  disabled={cartItems.length === 0} // Disable if cart is empty
+                  title="Proceed to finalize your order"
                 >
                   Proceed to Checkout
                 </button>
 
-                <button className="w-full mt-3 border-2 border-red-600 text-red-600 hover:bg-red-50 py-3 rounded-lg font-semibold transition-colors duration-200">
+                <button 
+                  onClick={() => console.log("Continuing shopping")} // Placeholder action
+                  className="w-full mt-3 border-2 border-red-600 text-red-600 hover:bg-red-50 py-3 rounded-lg font-semibold transition-colors duration-200"
+                  title="Continue browsing more products"
+                >
                   Continue Shopping
                 </button>
 
                 {/* Trust Badges */}
                 <div className="mt-6 pt-6 border-t">
                   <div className="space-y-3 text-sm text-gray-600">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" title="Your payment information is protected by SSL encryption">
                       <Shield className="w-4 h-4 text-green-500" />
                       <span>Secure SSL encrypted checkout</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" title="Orders over KES 5,000 qualify for free delivery">
                       <Truck className="w-4 h-4 text-blue-500" />
                       <span>Free shipping on orders over KES 5,000</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2" title="Return eligible items within 30 days of purchase">
                       <RotateCcw className="w-4 h-4 text-orange-500" />
                       <span>Easy 30-day returns</span>
                     </div>
