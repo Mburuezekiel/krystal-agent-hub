@@ -24,6 +24,7 @@ import CategoryPage from "./pages/Product/CategoryPage";
 import NewArrivalsPage from "./pages/Product/NewArrivalsPage";
 import SalePage from "./pages/Product/SalePage";
 import WishlistPage from './pages/Product/WishlistPage'
+import ProfilePage from "./pages/Profile/Profile";
 import CartPage from "./pages/Cart/CartPage";
 import CheckoutPage from "./pages/Cart/CheckoutPage";
 import ContactPage from "./pages/contact/ContactPage";
@@ -54,6 +55,7 @@ const App = () => (
            <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
              <Route path="/forgot-password" element={<ForgotPassword />} />
+               <Route path="/account" element={<ProfilePage />} />
 
 
           <Route path="/agent/dashboard" element={<AgentDash />} />
