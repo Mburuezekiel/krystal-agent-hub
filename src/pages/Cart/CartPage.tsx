@@ -126,28 +126,23 @@ const CartPage = () => {
     );
   };
 
-  // Function to handle Web Share API
-  const handleShareCart = async () => {
+  // Function to handle Web Share API for an individual product
+  const handleShareProduct = async (product) => {
     if (navigator.share) {
       try {
-        const cartDetails = productsInCart.map(product => 
-          `${product.name} (Qty: ${product.quantity}) - KES ${product.price.toLocaleString()}`
-        ).join('\n');
-        
         await navigator.share({
-          title: 'My Shopping Cart',
-          text: `Check out my items from the shopping cart:\n\n${cartDetails}\n\nTotal: KES ${total.toLocaleString()}`,
-          url: window.location.href, // Share current page URL
+          title: product.name,
+          text: `Check out this product: ${product.name} - KES ${product.price.toLocaleString()}!`,
+          url: window.location.href, // You might want a specific product URL here in a real app
         });
-        console.log('Cart shared successfully');
+        console.log('Product shared successfully:', product.name);
       } catch (error) {
-        console.error('Error sharing cart:', error);
+        console.error('Error sharing product:', error);
       }
     } else {
+      console.log('Web Share API not supported in this browser for product sharing.');
       // Fallback for browsers that do not support Web Share API
-      console.log('Web Share API not supported in this browser.');
-      // You could implement a custom share modal here
-      alert('Your browser does not support sharing. Please copy the link manually.');
+      alert(`To share ${product.name}, please copy this link: ${window.location.href}`);
     }
   };
 
@@ -214,8 +209,6 @@ const CartPage = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Cart Section */}
           <div className="lg:col-span-3 space-y-6">
-            {/* No "Select All" or "Bulk Actions" section anymore */}
-
             {/* Cart Items */}
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="divide-y divide-gray-200">
@@ -225,9 +218,7 @@ const CartPage = () => {
                   
                   return (
                     <div key={product.id} className={`p-6 ${!product.inStock ? 'bg-gray-50 opacity-70' : ''}`}>
-                      <div className="flex gap-4">
-                        {/* No Checkbox anymore */}
-
+                      <div className="flex flex-col sm:flex-row gap-4"> {/* Changed to flex-col for better mobile stacking */}
                         {/* Product Image */}
                         <div className="flex-shrink-0">
                           <div className="relative">
@@ -287,7 +278,7 @@ const CartPage = () => {
                             </div>
 
                             {/* Quantity and Actions */}
-                            <div className="flex flex-col items-end gap-3">
+                            <div className="flex flex-col items-end gap-3 mt-4 sm:mt-0"> {/* Added mt-4 for mobile spacing */}
                               {/* Quantity Controls */}
                               {product.inStock ? (
                                 <div className="flex items-center border border-gray-300 rounded-lg">
@@ -316,13 +307,21 @@ const CartPage = () => {
 
                               {/* Action Buttons */}
                               <div className="flex items-center gap-2">
-                                {/* No Heart icon (Save for Later) */}
+                                {/* Share button per product */}
+                                <button
+                                  onClick={() => handleShareProduct(product)}
+                                  className="p-2 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                  title={`Share ${product.name}`}
+                                >
+                                  <Share2 className="w-5 h-5" />
+                                </button>
+                                {/* Remove item button */}
                                 <button
                                   onClick={() => removeItem(product.id)}
                                   className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                   title="Remove item from cart"
                                 >
-                                  <Trash2 className="w-5 h-5" /> {/* Replaced X with Trash2 */}
+                                  <Trash2 className="w-5 h-5" />
                                 </button>
                               </div>
                             </div>
@@ -334,8 +333,6 @@ const CartPage = () => {
                 })}
               </div>
             </div>
-
-            {/* No "Saved for Later" section anymore */}
           </div>
 
           {/* Order Summary Sidebar */}
@@ -346,7 +343,7 @@ const CartPage = () => {
                 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span>Items ({cartItems.length}):</span> {/* Displays count of all items */}
+                    <span>Items ({cartItems.length}):</span>
                     <span>KES {subtotal.toLocaleString()}</span>
                   </div>
                   
@@ -401,21 +398,16 @@ const CartPage = () => {
                   )}
                 </div>
 
-                {/* Share and Call Buttons */}
-                <div className="flex flex-col sm:flex-row gap-3 mt-6">
-                  <button 
-                    onClick={handleShareCart}
-                    className="flex-1 bg-blue-500 hover:bg-blue-600 text-white py-3 rounded-lg font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2"
-                    title="Share your cart details with others"
-                  >
-                    <Share2 className="w-5 h-5" /> Share Cart
-                  </button>
+                {/* Share and Call Buttons (Cart-wide) */}
+                <div className="flex gap-3 mt-6">
+                  {/* Share button (Cart-wide, icon only) - kept for consistency, though product-specific is primary */}
+                  {/* Removed cart-wide share button as per new request for product-specific sharing only */}
                   <a 
                     href="tel:+254700282618"
                     className="flex-1 bg-green-500 hover:bg-green-600 text-white py-3 rounded-lg font-semibold text-base transition-colors duration-200 flex items-center justify-center gap-2"
                     title="Call us for inquiries"
                   >
-                    <Phone className="w-5 h-5" /> Call for Enquiry
+                    <Phone className="w-5 h-5" />
                   </a>
                 </div>
 
