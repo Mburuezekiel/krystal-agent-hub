@@ -12,7 +12,7 @@ import { useAuth } from '@/context/AuthContext';
 const registerSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
-  userName: z.string() // Already correctly set to 'userName'
+  userName: z.string()
     .min(3, "Username must be at least 3 characters")
     .max(20, "Username must be at most 20 characters")
     .regex(/^[a-zA-Z0-9_.]+$/, "Username can only contain letters, numbers, underscores, or periods"),
@@ -53,10 +53,8 @@ const RegisterPage: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        // --- THIS IS THE KEY CHANGE ---
-        // Pass result.userName (which comes from your backend) to the login function
         login(result.token, result.userName);
-        alert('Registration successful! Welcome, ' + result.userName); // Update alert message too
+        alert('Registration successful! Welcome, ' + result.userName);
         navigate('/');
       } else {
         alert('Registration failed: ' + (result.message || 'Please check your input.'));
@@ -96,10 +94,10 @@ const RegisterPage: React.FC = () => {
             </div>
 
             <div>
-              <Label htmlFor="userName">Username</Label> {/* Corrected htmlFor to userName */}
+              <Label htmlFor="userName">Username</Label>
               <Input
-                id="userName" // Corrected id to userName
-                {...register("userName")} // Corrected register to userName
+                id="userName"
+                {...register("userName")}
                 className="mt-1 focus:ring-[#D81E05] focus:border-[#D81E05]"
               />
               {errors.userName && <p className="text-red-500 text-sm mt-1">{errors.userName.message}</p>}

@@ -7,8 +7,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 
-// Import the useAuth hook
-import { useAuth } from '@/context/AuthContext'; // Adjust path if necessary
+import { useAuth } from '@/context/AuthContext';
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -19,7 +18,6 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  // Destructure the 'login' function from the useAuth hook
   const { login } = useAuth();
 
   const { register, handleSubmit, formState: { errors }, reset } = useForm<LoginFormValues>({
@@ -39,11 +37,9 @@ const LoginPage: React.FC = () => {
       const result = await response.json();
 
       if (response.ok) {
-        // --- THIS IS THE KEY CHANGE ---
-        // Pass result.userName (which comes from your backend) to the login function
-        login(result.token, result.userName); // <-- Changed from result.firstName
-        alert('Login successful! Welcome, ' + result.userName); // Update alert message too
-        navigate('/'); // Redirect to home or dashboard after successful login
+        login(result.token, result.userName);
+        alert('Login successful! Welcome, ' + result.userName);
+        navigate('/');
       } else {
         alert('Login failed: ' + (result.message || 'Invalid credentials'));
       }
