@@ -49,7 +49,7 @@ const productSchema = mongoose.Schema(
     },
     brand: {
       type: String,
-      required: [true, 'Product brand is required'],
+      // required: [true, 'Product brand is required'],
       trim: true,
     },
     stock: {
