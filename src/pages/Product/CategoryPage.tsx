@@ -312,7 +312,7 @@ const CategoryPage: React.FC = () => {
               <div className="md:hidden grid grid-cols-2 gap-2 w-full">
                 {/* Mobile Price Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label>
+                 
                   <select
                     id="price-filter-mobile"
                     value={selectedPriceRange}
@@ -329,7 +329,7 @@ const CategoryPage: React.FC = () => {
 
                 {/* Mobile Brand Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label>
+               
                   <select
                     id="brand-filter-mobile"
                     value={selectedBrand}
@@ -345,21 +345,6 @@ const CategoryPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Mobile Sort By */}
-                <div className="flex items-center gap-2 col-span-2"> {/* This spans both columns */}
-                  <label htmlFor="sort-by-mobile" className="text-sm text-gray-600 font-medium">Sort by:</label>
-                  <select
-                    id="sort-by-mobile"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
-                  >
-                    {/* Removed Popularity for mobile */}
-                    <option value="newest">Newest Arrivals</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                  </select>
-                </div>
               </div>
             </div>
           </div>
