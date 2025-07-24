@@ -49,7 +49,7 @@ export const ALL_CATEGORIES = [
 ];
 
 const API_URL = "https://krystal-agent-hub.onrender.com/api/products";
-const CART_API_URL = "https://krystal-agent-hub.onrender.com/api/cart";
+const CART_API_URL = "http://localhost:5000/api/cart";
 
 const getProductsArrayFromResponse = (responseData: any): Product[] => {
   if (responseData && Array.isArray(responseData.products)) {
