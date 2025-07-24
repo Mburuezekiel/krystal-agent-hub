@@ -279,9 +279,9 @@ const NewArrivalsPage: React.FC = () => {
 
         <main className="flex-1">
           <div className="flex justify-between items-center mb-4 p-2 sm:p-0">
-            <span className="text-gray-700 text-sm">Showing {sortedAndFilteredNewArrivals.length} products</span>
+            <span className="text-gray-700 text-sm">{sortedAndFilteredNewArrivals.length} products</span>
             <div className="flex items-center">
-              <label htmlFor="sort-by" className="text-gray-700 mr-1 text-sm">Sort by:</label>
+              <label htmlFor="sort-by" className="text-gray-700 mr-1 text-sm">Sort:</label>
               <select
                 id="sort-by"
                 value={sortBy}
