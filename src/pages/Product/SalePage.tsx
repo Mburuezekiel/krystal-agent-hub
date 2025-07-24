@@ -67,6 +67,17 @@ const SalePage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] font-inter">
+       <nav className="text-sm text-gray-600 mb-6">
+              <ol className="list-none p-0 inline-flex flex-wrap">
+                <li className="flex items-center">
+                  <Link to="/" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Home</Link>
+                  <span className="mx-1 sm:mx-2">/</span>
+                </li>
+                <li className="flex items-center text-gray-800 text-xs sm:text-sm">
+                  Flash Sale
+                </li>
+              </ol>
+            </nav>
       {/* Increased bottom padding for scrolling past bottom navigation */}
       <div className="pb-20 md:pb-24 lg:pb-28"> {/* Added padding-bottom */}
         <h1 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#D81E05]">All Sale Items</h1>
