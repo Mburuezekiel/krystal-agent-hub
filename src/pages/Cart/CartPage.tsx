@@ -19,7 +19,8 @@ import {
   removeCartItemApi,
   Product, // Import the Product interface for typing
 } from "@/services/product-service";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate for redirection
+import { Button } from "@/components/ui/button";
 
 // Star Rating component (re-used for consistency)
 const StarRating = ({ rating, size = "w-4 h-4" }) => {
@@ -45,6 +46,7 @@ interface CartProduct extends Product {
 const CartPage = () => {
   const { isLoggedIn } = useAuth();
   const authToken = localStorage.getItem('userToken'); // Get token from localStorage
+  const navigate = useNavigate(); // Initialize navigate hook
 
   const [productsInCart, setProductsInCart] = useState<CartProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -52,6 +54,16 @@ const CartPage = () => {
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  // Effect to make custom messages disappear after a few seconds
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => {
+        setMessage(null);
+      }, 3000); // Message disappears after 3 seconds
+      return () => clearTimeout(timer); // Clean up the timer
+    }
+  }, [message]);
 
   // Function to fetch the user's cart from the backend
   const fetchCart = async () => {
@@ -116,17 +128,17 @@ const CartPage = () => {
       return;
     }
 
+    // Optimistic update
+    setProductsInCart(prev => prev.map(p => p._id === productId ? { ...p, quantity: newQuantity } : p));
+
     try {
-      // Optimistic update (optional, but improves UX)
-      setProductsInCart(prev => prev.map(p => p._id === productId ? { ...p, quantity: newQuantity } : p));
       await updateCartItemQuantityApi(productId, newQuantity, authToken);
       setMessage({ type: 'success', text: `Quantity for "${currentProduct.name}" updated.` });
-      // Re-fetch cart to ensure consistency (especially after optimistic update)
-      fetchCart();
+      // No full re-fetch here, optimistic update is enough for success
     } catch (err: any) {
       console.error("Error updating quantity:", err);
       setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update quantity. Please try again.' });
-      // Revert optimistic update on error
+      // Revert optimistic update on error by re-fetching
       fetchCart();
     }
   };
@@ -141,17 +153,17 @@ const CartPage = () => {
       return;
     }
 
+    // Optimistic update
+    setProductsInCart(prev => prev.filter(p => p._id !== productId));
+
     try {
-      // Optimistic update
-      setProductsInCart(prev => prev.filter(p => p._id !== productId));
       await removeCartItemApi(productId, authToken);
       setMessage({ type: 'success', text: `"${productToRemove.name}" removed from cart.` });
-      // Re-fetch cart to ensure consistency
-      fetchCart();
+      // No full re-fetch here, optimistic update is enough for success
     } catch (err: any) {
       console.error("Error removing item:", err);
       setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to remove item. Please try again.' });
-      // Revert optimistic update on error
+      // Revert optimistic update on error by re-fetching
       fetchCart();
     }
   };
@@ -203,6 +215,20 @@ const CartPage = () => {
         .catch(() => setMessage({ type: 'error', text: 'Could not copy to clipboard.' }));
     }
   };
+
+  // Function to handle redirection to checkout page
+  const handleProceedToCheckout = () => {
+    if (!isLoggedIn) {
+      setMessage({ type: 'error', text: 'Please log in to proceed to checkout.' });
+      return;
+    }
+    if (productsInCart.length === 0) {
+      setMessage({ type: 'error', text: 'Your cart is empty. Please add items before proceeding to checkout.' });
+      return;
+    }
+    navigate('/cart/checkout');
+  };
+
 
   if (loading) {
     return (
@@ -337,32 +363,36 @@ const CartPage = () => {
                       <div className="flex flex-col sm:flex-row gap-4">
                         {/* Product Image */}
                         <div className="flex-shrink-0">
-                          <div className="relative">
-                            <img
-                              src={product.imageUrl}
-                              alt={product.name}
-                              className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
-                              onError={(e) => {
-                                e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
-                                e.currentTarget.onerror = null;
-                              }}
-                            />
-                            {product.stock <= 0 && (
-                              <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-xs font-medium">
-                                  Out of Stock
-                                </span>
-                              </div>
-                            )}
-                          </div>
+                          <Link to={`/product/${product._id}`} className="block"> {/* Link added here */}
+                            <div className="relative">
+                              <img
+                                src={product.imageUrl}
+                                alt={product.name}
+                                className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
+                                onError={(e) => {
+                                  e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
+                                  e.currentTarget.onerror = null;
+                                }}
+                              />
+                              {product.stock <= 0 && (
+                                <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
+                                  <span className="text-white text-xs font-medium">
+                                    Out of Stock
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          </Link>
                         </div>
                         {/* Product Details */}
                         <div className="flex-grow min-w-0">
                           <div className="flex flex-col sm:flex-row sm:justify-between gap-4">
                             <div className="flex-grow">
-                              <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2">
-                                {product.name}
-                              </h3>
+                              <Link to={`/product/${product._id}`} className="block"> {/* Link added here */}
+                                <h3 className="font-semibold text-gray-900 text-lg mb-1 line-clamp-2 hover:underline">
+                                  {product.name}
+                                </h3>
+                              </Link>
                               <p className="text-gray-600 text-sm mb-2">
                                 {product.brand} • {product.category}
                               </p>
@@ -552,14 +582,14 @@ const CartPage = () => {
                     <Phone className="w-5 h-5" />
                   </a>
                   {/* Checkout Button (takes remaining space) */}
-                  <button
-                    onClick={() => console.log("Proceeding to checkout")} // Placeholder action
+                  <Button
+                    onClick={handleProceedToCheckout} // Use the new handler for redirection
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
                     disabled={productsInCart.length === 0} // Disable if cart is empty
                     title="Proceed to finalize your order"
                   >
                     Proceed to Checkout
-                  </button>
+                  </Button>
                 </div>
 
                 <Link
