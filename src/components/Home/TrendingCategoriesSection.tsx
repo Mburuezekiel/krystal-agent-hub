@@ -247,7 +247,7 @@ const TrendingCategoriesSection: React.FC = () => {
   return (
     <section className="py-8 bg-[#F8F8F8] text-[#222222] px-4 md:px-6 lg:px-8">
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
-        🛍️ Shop by Category 🛍️
+        🛍️ Shop by Category
       </h2>
       <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 sm:gap-6">
         {homepageCategories.map((category) => (
