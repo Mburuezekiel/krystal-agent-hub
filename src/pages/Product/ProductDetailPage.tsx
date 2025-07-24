@@ -371,7 +371,7 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
             <Button
               onClick={handleAddToCart}
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
