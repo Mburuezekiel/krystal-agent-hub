@@ -15,6 +15,17 @@ import {
   getPersonalizedRecommendations,
   Product,
 } from "@/services/product-service";
+import womenclothing from "../../assets/womenclothing.png";
+import menclothing from "../../assets/menclothing.png";
+import kids from "../../assets/kids.jpg";
+import home   from "../../assets/homeandkitchen.jpg";
+import jewelry from "../../assets/jewelry.png";
+import electonics from "../../assets/electronics.png";
+
+
+
+
+
 
 interface CategoryDisplay {
   name: string;
@@ -24,27 +35,27 @@ interface CategoryDisplay {
 const homepageCategories: CategoryDisplay[] = [
   {
     name: "Women Clothing",
-    imageUrl: "https://placehold.co/400x400/D81E05/FFFFFF?text=Women",
+    imageUrl: womenclothing,
   },
   {
     name: "Men Clothing",
-    imageUrl: "https://placehold.co/400x400/222222/FFFFFF?text=Men",
+    imageUrl: menclothing,
   },
   {
     name: "Home & Kitchen",
-    imageUrl: "https://placehold.co/400x400/FFD700/222222?text=Home",
+    imageUrl: home,
   },
   {
     name: "Electronics",
-    imageUrl: "https://placehold.co/400x400/F8F8F8/222222?text=Electronics",
+    imageUrl:electonics,
   },
   {
     name: "Kids",
-    imageUrl: "https://placehold.co/400x400/D81E05/FFFFFF?text=Kids",
+    imageUrl: kids,
   },
   {
     name: "Jewelry & Accessories",
-    imageUrl: "https://placehold.co/400x400/222222/FFFFFF?text=Jewelry",
+    imageUrl: jewelry,
   },
 ];
 
