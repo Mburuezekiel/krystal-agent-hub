@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-// ALL_CATEGORIES is not used in this component, so it can be removed if not needed elsewhere
-// import { ALL_CATEGORIES } from "@/services/product-service";
 import { Card, CardContent } from "../ui/card";
 import {
   Carousel,
@@ -9,7 +7,7 @@ import {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
-  type CarouselApi, // Import CarouselApi type
+  type CarouselApi,
 } from "../ui/carousel";
 import {
   getPersonalizedRecommendations,
@@ -18,14 +16,9 @@ import {
 import womenclothing from "../../assets/womenclothing.png";
 import menclothing from "../../assets/menclothing.png";
 import kids from "../../assets/kids.jpg";
-import home   from "../../assets/homeandkitchen.jpg";
+import home from "../../assets/homeandkitchen.jpg";
 import jewelry from "../../assets/jewelry.png";
 import electonics from "../../assets/electronics.png";
-
-
-
-
-
 
 interface CategoryDisplay {
   name: string;
@@ -47,7 +40,7 @@ const homepageCategories: CategoryDisplay[] = [
   },
   {
     name: "Electronics",
-    imageUrl:electonics,
+    imageUrl: electonics,
   },
   {
     name: "Kids",
@@ -60,18 +53,15 @@ const homepageCategories: CategoryDisplay[] = [
 ];
 
 const TrendingCategoriesSection: React.FC = () => {
-  // 1. State for recommendations and loading/error
   const [recommendations, setRecommendations] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 2. useEffect to fetch data
   useEffect(() => {
     const fetchRecommendations = async () => {
       try {
         setLoading(true);
-        setError(null); // Clear previous errors
-        // AWAIT the async function call
+        setError(null);
         const data = await getPersonalizedRecommendations(undefined, 8);
         setRecommendations(data);
       } catch (err) {
@@ -83,20 +73,18 @@ const TrendingCategoriesSection: React.FC = () => {
     };
 
     fetchRecommendations();
-  }, []); // Empty dependency array: runs once on mount
+  }, []);
 
-  // Check if there are recommendations AFTER data has been fetched
   const hasRecommendations = recommendations.length > 0;
 
-  // Carousel auto-slide state and refs (remain the same)
   const [api, setApi] = useState<CarouselApi>();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const AUTOPLAY_INTERVAL = 3000; // 3 seconds
+  const AUTOPLAY_INTERVAL = 3000;
 
   const scrollNext = useCallback(() => {
     if (api) {
       if (api.selectedScrollSnap() === api.scrollSnapList().length - 1) {
-        api.scrollTo(0); // Loop back to the start
+        api.scrollTo(0);
       } else {
         api.scrollNext();
       }
@@ -116,19 +104,16 @@ const TrendingCategoriesSection: React.FC = () => {
     }
   }, []);
 
-  // Effect to manage autoplay lifecycle
   useEffect(() => {
     if (!api) return;
 
     startAutoplay();
 
-    // Clear interval on unmount
     return () => {
       stopAutoplay();
     };
   }, [api, startAutoplay, stopAutoplay]);
 
-  // Handle loading and error states for the entire section or just the carousel
   if (loading) {
     return (
       <section className="py-8 bg-[#F8F8F8] ">
@@ -203,7 +188,6 @@ const TrendingCategoriesSection: React.FC = () => {
     );
   }
 
-  // If no recommendations are available after loading, show a message
   if (!hasRecommendations) {
     return (
       <section className="py-8 bg-[#F8F8F8] ">
@@ -236,7 +220,9 @@ const TrendingCategoriesSection: React.FC = () => {
         <h6 className="text-3xl md:text-xl bg-orange-500 font-bold text-center mb-8 text-[#F8F8F8]">
           Picked For You
         </h6>
-        <div className="text-center p-8">No recommendations found at the moment.</div>
+        <div className="text-center p-8">
+          No recommendations found at the moment.
+        </div>
       </section>
     );
   }
@@ -288,7 +274,8 @@ const TrendingCategoriesSection: React.FC = () => {
               key={product._id}
               className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4"
             >
-              <Link to={`/product/${product._id}`} className="group block"> {/* Use product._id here */}
+              <Link to={`/product/${product._id}`} className="group block">
+                {" "}
                 <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                   <CardContent className="p-0">
                     <div className="w-full aspect-square bg-gray-100 overflow-hidden">
@@ -319,7 +306,6 @@ const TrendingCategoriesSection: React.FC = () => {
             </CarouselItem>
           ))}
         </CarouselContent>
-        {/* Navigation buttons will still work, but are hidden on small screens */}
         <CarouselPrevious className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70" />
         <CarouselNext className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 text-white bg-black/50 hover:bg-black/70" />
       </Carousel>
