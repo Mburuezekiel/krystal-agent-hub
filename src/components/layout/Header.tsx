@@ -103,20 +103,18 @@ const Header: React.FC = () => {
       </div>
 
       {/* Mobile Top Bar (Search Only) - Visible on small screens, hidden on large */}
-      <div className="lg:hidden bg-[#D81E05] shadow-md border-b border-[#A01A04] sticky top-0 z-40 p-3">
-        <div className="container mx-auto flex items-center gap-4">
-          {/* Mobile Search Bar Only */}
-          <div className="flex-grow relative">
-            <Input
-              type="search"
-              placeholder="Search any product on Krystal..."
-              className="w-full pl-10 pr-4 rounded-full bg-white bg-opacity-90 border-none focus:ring-2 focus:ring-[#FFD700] text-[#222222] placeholder:text-gray-500 text-sm"
-            />
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-600 h-4 w-4" />
-          </div>
-      
-        </div>
-      </div>
+      <div className="lg:hidden bg-white shadow-sm sticky top-0 z-40 p-3">
+  <div className="container mx-auto flex items-center">
+    <div className="flex-grow relative">
+      <Input
+        type="search"
+        placeholder="Search Krystal..."
+        className="w-full pl-10 pr-4 rounded-full bg-white border border-gray-300 focus:ring-2 focus:ring-[#FFD700] text-gray-800 placeholder:text-gray-500 text-base"
+      />
+      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
+    </div>
+  </div>
+</div>
 
       {/* Main Header (Desktop) - Hidden on mobile */}
       <header
