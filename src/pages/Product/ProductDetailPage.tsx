@@ -292,7 +292,7 @@ const ProductDetailPage: React.FC = () => {
           )}
 
           <div className="flex items-baseline gap-2 mb-4">
-            <p className="text-3xl font-bold text-[#D81E05]">KES {product.price.toFixed(2)}</p>
+            <p className="text-2xl font-bold text-[#D81E05]">KES {product.price.toFixed(2)}</p>
             {product.oldPrice && product.oldPrice > product.price && (
               <p className="text-lg text-gray-500 line-through">KES {product.oldPrice.toFixed(2)}</p>
             )}
