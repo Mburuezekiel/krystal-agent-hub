@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-
 import { getProductById, getProductsByCategory, Product } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Share2 } from 'lucide-react';
+import { Heart, Share2, Star } from 'lucide-react'; // Import Star icon
 
+/**
+ * Defines the detailed structure for a Product object, extending the base Product interface.
+ * This ensures all fields from the Mongoose schema are recognized.
+ */
 interface DetailedProduct extends Product {
   description: string;
   brand: string;
@@ -14,47 +17,138 @@ interface DetailedProduct extends Product {
   numReviews: number;
   images: string[];
   specifications: { [key: string]: string };
+  oldPrice?: number; // Ensure oldPrice is optional but present as per schema
 }
 
-const addProductToWishlist = (product: Product) => {
-  const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-  if (!wishlist.some((item: Product) => item._id === product._id)) {
-    wishlist.push(product);
-    localStorage.setItem('wishlist', JSON.stringify(wishlist));
-    return true;
-  }
-  return false;
+/**
+ * StarRating component displays a star rating.
+ * Re-using from CategoryListPage for consistency.
+ * @param {object} props - The component props.
+ * @param {number} props.rating - The current rating (1-5).
+ * @param {string} [props.size="w-5 h-5"] - Tailwind CSS classes for star size.
+ */
+const StarRating = ({ rating, size = "w-5 h-5" }) => {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`${size} ${
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
 };
 
-const ProductDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>();
-  const product: DetailedProduct | undefined = getProductById(id || '') as DetailedProduct;
+/**
+ * Helper function to add a product to the wishlist stored in localStorage.
+ * @param {Product} product - The product to add.
+ * @returns {boolean} True if the product was added, false if it was already present.
+ */
+const addProductToWishlist = (product: Product): boolean => {
+  try {
+    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+    if (!wishlist.some((item: Product) => item._id === product._id)) {
+      wishlist.push(product);
+      localStorage.setItem('wishlist', JSON.stringify(wishlist));
+      return true;
+    }
+    return false;
+  } catch (error) {
+    console.error("Failed to add product to wishlist:", error);
+    return false;
+  }
+};
 
-  const [mainImage, setMainImage] = useState<string>(product?.imageUrl || '');
+/**
+ * ProductDetailPage component displays detailed information about a single product.
+ */
+const ProductDetailPage: React.FC = () => {
+  const { id } = useParams<{ id: string }>(); // Get product ID from URL parameters
+  const [product, setProduct] = useState<DetailedProduct | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [mainImage, setMainImage] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
+  // Effect to fetch product details and related products
   useEffect(() => {
-    if (product) {
-      setMainImage(product.imageUrl);
-      setQuantity(1);
-      const productsInSameCategory = getProductsByCategory(product.category);
-      const filteredRelated = productsInSameCategory
-        .filter(p => p.id !== product.id && p.brand !== product.brand)
-        .sort(() => 0.5 - Math.random())
-        .slice(0, 5);
-
-      if (filteredRelated.length < 5) {
-        const allOtherProducts = getProductsByCategory(product.category)
-          .filter(p => p.id !== product.id && !filteredRelated.some(fp => fp.id === p.id))
-          .sort(() => 0.5 - Math.random());
-        filteredRelated.push(...allOtherProducts.slice(0, 5 - filteredRelated.length));
+    const fetchProductDetails = async () => {
+      if (!id) {
+        setError("Product ID is missing.");
+        setLoading(false);
+        return;
       }
 
-      setRelatedProducts(filteredRelated);
-    }
-  }, [product]);
+      try {
+        setLoading(true);
+        setError(null);
+        setMessage(null); // Clear any previous messages
 
+        const fetchedProduct = await getProductById(id);
+        if (fetchedProduct) {
+          setProduct(fetchedProduct as DetailedProduct);
+          setMainImage(fetchedProduct.imageUrl); // Set initial main image
+          setQuantity(1); // Reset quantity
+
+          // Fetch related products
+          const productsInSameCategory = await getProductsByCategory(fetchedProduct.category);
+          const filteredRelated = productsInSameCategory
+            .filter(p => p._id !== fetchedProduct._id && p.brand !== fetchedProduct.brand) // Use _id for comparison
+            .sort(() => 0.5 - Math.random())
+            .slice(0, 5);
+
+          // If not enough related products, fill from other products in the same category
+          if (filteredRelated.length < 5) {
+            const allOtherProducts = productsInSameCategory
+              .filter(p => p._id !== fetchedProduct._id && !filteredRelated.some(fp => fp._id === p._id)) // Use _id for comparison
+              .sort(() => 0.5 - Math.random());
+            filteredRelated.push(...allOtherProducts.slice(0, 5 - filteredRelated.length));
+          }
+          setRelatedProducts(filteredRelated);
+
+        } else {
+          setProduct(null);
+          setError("Product not found.");
+        }
+      } catch (err) {
+        console.error("Failed to fetch product details:", err);
+        setError("Failed to load product details. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProductDetails();
+  }, [id]); // Re-run effect when product ID changes
+
+  // Display loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+        <p className="text-gray-600 text-lg">Loading product details...</p>
+      </div>
+    );
+  }
+
+  // Display error state
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-12 text-center text-[#222222] bg-[#F8F8F8] min-h-[60vh] flex flex-col justify-center items-center">
+        <h1 className="text-4xl font-bold mb-4">Error</h1>
+        <p className="text-lg text-red-600">{error}</p>
+        <Button asChild className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold">
+          <Link to="/">Go to Homepage</Link>
+        </Button>
+      </div>
+    );
+  }
+
+  // Display product not found message if product is null after loading
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-12 text-center text-[#222222] bg-[#F8F8F8] min-h-[60vh] flex flex-col justify-center items-center">
@@ -67,31 +161,16 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <svg
-          key={i}
-          className={`w-5 h-5 ${i <= Math.floor(rating) ? 'text-yellow-400' : 'text-gray-300'}`}
-          fill="currentColor"
-          viewBox="0 0 20 20"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.538 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.783.57-1.838-.197-1.538-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.381-1.81.588-1.81h3.462a1 1 0 00.95-.69l1.07-3.292z" />
-        </svg>
-      );
-    }
-    return <div className="flex">{stars}</div>;
-  };
-
+  // Handle adding product to wishlist
   const handleAddToWishlist = () => {
     if (addProductToWishlist(product)) {
-      alert(`"${product.name}" added to your wishlist!`);
+      setMessage({ type: 'success', text: `"${product.name}" added to your wishlist!` });
     } else {
-      alert(`"${product.name}" is already in your wishlist!`);
+      setMessage({ type: 'error', text: `"${product.name}" is already in your wishlist!` });
     }
   };
 
+  // Handle sharing product
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -100,21 +179,29 @@ const ProductDetailPage: React.FC = () => {
           text: `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}...`,
           url: window.location.href,
         });
-        console.log('Product shared successfully');
-      } catch (error) {
-        console.error('Error sharing product:', error);
-        alert('Could not share product. Please try again.');
+        setMessage({ type: 'success', text: 'Product shared successfully!' });
+      } catch (shareError) {
+        console.error('Error sharing product:', shareError);
+        setMessage({ type: 'error', text: 'Could not share product. Please try again.' });
       }
     } else {
+      // Fallback for browsers that don't support Web Share API
       const shareText = `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}... ${window.location.href}`;
       navigator.clipboard.writeText(shareText)
-        .then(() => alert('Product link and details copied to clipboard!'))
-        .catch(() => alert('Could not copy to clipboard.'));
+        .then(() => setMessage({ type: 'success', text: 'Product link and details copied to clipboard!' }))
+        .catch(() => setMessage({ type: 'error', text: 'Could not copy to clipboard.' }));
     }
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen">
+    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20"> {/* Added pb-20 here */}
+      {/* Message Box for Wishlist/Share feedback */}
+      {message && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-md shadow-lg text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {message.text}
+        </div>
+      )}
+
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex">
           <li className="flex items-center">
@@ -154,7 +241,7 @@ const ProductDetailPage: React.FC = () => {
             <div className="flex gap-2 justify-center flex-wrap">
               {product.images.map((img, index) => (
                 <button
-                  key={index}
+                  key={index} // Using index as key is generally okay for static lists that don't change order or size
                   onClick={() => setMainImage(img)}
                   className={`w-16 h-16 rounded-md overflow-hidden border-2 ${mainImage === img ? 'border-[#D81E05]' : 'border-gray-200'} hover:border-[#D81E05] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D81E05]`}
                 >
@@ -178,14 +265,14 @@ const ProductDetailPage: React.FC = () => {
 
           {product.rating !== undefined && product.numReviews !== undefined && (
             <div className="flex items-center mb-4">
-              {renderStars(product.rating)}
+              <StarRating rating={Math.round(product.rating)} /> {/* Use StarRating component */}
               <span className="text-sm text-gray-600 ml-2">({product.numReviews} reviews)</span>
             </div>
           )}
 
           <div className="flex items-baseline gap-2 mb-4">
             <p className="text-3xl font-bold text-[#D81E05]">KES {product.price.toFixed(2)}</p>
-            {product.oldPrice && (
+            {product.oldPrice && product.oldPrice > product.price && ( // Only show oldPrice if it's higher than current price
               <p className="text-lg text-gray-500 line-through">KES {product.oldPrice.toFixed(2)}</p>
             )}
           </div>
@@ -216,7 +303,7 @@ const ProductDetailPage: React.FC = () => {
                 type="number"
                 id="quantity"
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Number(e.target.value)))}
+                onChange={(e) => setQuantity(Math.max(1, Math.min(Number(e.target.value), product.stock || 99)))} // Cap quantity at stock
                 className="w-16 text-center border-x border-gray-300 py-1 text-lg"
                 min="1"
                 max={product.stock || 99}
@@ -230,7 +317,7 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
             <Button
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
               disabled={product.stock !== undefined && product.stock <= 0}
@@ -294,7 +381,7 @@ const ProductDetailPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-center mb-6 text-[#222222]">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {relatedProducts.map((relatedProduct) => (
-              <Link to={`/product/${relatedProduct.id}`} key={relatedProduct.id} className="group block">
+              <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block"> {/* Use _id for related products link and key */}
                 <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                   <CardContent className="p-0">
                     <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
@@ -316,7 +403,7 @@ const ProductDetailPage: React.FC = () => {
                         {relatedProduct.name}
                       </h3>
                       <div className="flex items-center justify-center gap-2">
-                        {relatedProduct.oldPrice && (
+                        {relatedProduct.oldPrice && relatedProduct.oldPrice > relatedProduct.price && (
                           <p className="text-xs text-gray-500 line-through">
                             KES {relatedProduct.oldPrice.toFixed(2)}</p>
                         )}
