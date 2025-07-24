@@ -315,3 +315,69 @@ export const addToCartApi = async (
     throw error;
   }
 };
+ 
+export const getCartApi = async (token: string): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.get(CART_API_URL, config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching cart:", error);
+    throw error;
+  }
+};
+
+/**
+ * Updates the quantity of a specific product in the user's cart.
+ * @param {string} productId - The ID of the product to update.
+ * @param {number} quantity - The new quantity for the product.
+ * @param {string} token - The user's authentication token.
+ * @returns {Promise<any>} A promise that resolves with the updated cart data.
+ */
+export const updateCartItemQuantityApi = async (
+  productId: string,
+  quantity: number,
+  token: string
+): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.put(`${CART_API_URL}/${productId}`, { quantity }, config);
+    return response.data;
+  } catch (error) {
+    console.error(`Error updating quantity for product ${productId} in cart:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Removes a specific product from the user's cart.
+ * @param {string} productId - The ID of the product to remove.
+ * @param {string} token - The user's authentication token.
+ * @returns {Promise<any>} A promise that resolves with the updated cart data.
+ */
+export const removeCartItemApi = async (
+  productId: string,
+  token: string
+): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.delete(`${CART_API_URL}/${productId}`, config);
+    return response.data;
+  } catch (error) {
+    console.error(`Error removing product ${productId} from cart:`, error);
+    throw error;
+  }
+};

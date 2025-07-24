@@ -12,114 +12,166 @@ import {
   RotateCcw,
   Star,
 } from "lucide-react";
+import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
+import {
+  getCartApi,
+  updateCartItemQuantityApi,
+  removeCartItemApi,
+  Product, // Import the Product interface for typing
+} from "@/services/product-service";
+import { Link } from "react-router-dom";
 
-// Mock product service
-const getProductById = (id) => {
-  const products = {
-    p1: {
-      id: "p1",
-      name: "Premium Wireless Headphones",
-      category: "Electronics",
-      price: 8999,
-      originalPrice: 12999,
-      imageUrl:
-        "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop",
-      rating: 4.5,
-      reviews: 245,
-      inStock: true,
-      brand: "AudioTech",
-    },
-    p5: {
-      id: "p5",
-      name: "Smart Fitness Watch",
-      category: "Wearables",
-      price: 15999,
-      originalPrice: 19999,
-      imageUrl:
-        "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop",
-      rating: 4.3,
-      reviews: 189,
-      inStock: true,
-      brand: "FitPro",
-    },
-    p15: {
-      id: "p15",
-      name: "Professional Camera Lens",
-      category: "Photography",
-      price: 45000,
-      originalPrice: 52000,
-      imageUrl:
-        "https://images.unsplash.com/photo-1606983340126-99ab4feaa64a?w=300&h=300&fit=crop",
-      rating: 4.8,
-      reviews: 76,
-      inStock: false, // This item is out of stock to demonstrate the UI
-      brand: "LensMaster",
-    },
-  };
-  return products[id] || null;
+// Star Rating component (re-used for consistency)
+const StarRating = ({ rating, size = "w-4 h-4" }) => {
+  return (
+    <div className="flex items-center gap-1">
+      {[1, 2, 3, 4, 5].map((star) => (
+        <Star
+          key={star}
+          className={`${size} ${
+            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
+          }`}
+        />
+      ))}
+    </div>
+  );
 };
 
-const CartPage = () => {
-  // cartItems now only stores productId and quantity, no 'selected' property
-  const [cartItems, setCartItems] = useState([
-    { productId: "p1", quantity: 1 },
-    { productId: "p5", quantity: 2 },
-    { productId: "p15", quantity: 1 },
-  ]);
+// Define a type for cart items that include full product details
+interface CartProduct extends Product {
+  quantity: number; // Quantity of this product in the cart
+}
 
-  // productsInCart will hold the full product details along with quantity
-  const [productsInCart, setProductsInCart] = useState([]);
+const CartPage = () => {
+  const { isLoggedIn } = useAuth();
+  const authToken = localStorage.getItem('userToken'); // Get token from localStorage
+
+  const [productsInCart, setProductsInCart] = useState<CartProduct[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [promoCode, setPromoCode] = useState("");
   const [promoApplied, setPromoApplied] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // Effect to fetch product details when cartItems change
-  useEffect(() => {
-    const fetchedProducts = [];
-    cartItems.forEach((item) => {
-      const product = getProductById(item.productId);
-      if (product) {
-        fetchedProducts.push({ ...product, quantity: item.quantity });
-      }
-    });
-    setProductsInCart(fetchedProducts);
-  }, [cartItems]);
+  // Function to fetch the user's cart from the backend
+  const fetchCart = async () => {
+    if (!isLoggedIn || !authToken) {
+      setProductsInCart([]); // Clear cart if not logged in
+      setLoading(false);
+      setError("Please log in to view your cart.");
+      return;
+    }
 
-  // Function to update quantity of a product in the cart
-  const updateQuantity = (productId, delta) => {
-    setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.productId === productId
-          ? { ...item, quantity: Math.max(1, item.quantity + delta) } // Ensure quantity doesn't go below 1
-          : item
-      )
-    );
-  };
-
-  // Function to remove an item from the cart
-  const removeItem = (productId) => {
-    setCartItems((prevItems) =>
-      prevItems.filter((item) => item.productId !== productId)
-    );
-  };
-
-  // Function to apply a promo code
-  const applyPromoCode = () => {
-    if (promoCode.toUpperCase() === "SAVE10") {
-      // Example promo code
-      setPromoApplied(true);
-      // In a real app, you might also clear the promoCode input or show a success message
-    } else {
-      setPromoApplied(false);
-      // Show an error message for invalid promo code
-      console.log("Invalid promo code");
+    try {
+      setLoading(true);
+      setError(null);
+      setMessage(null);
+      const response = await getCartApi(authToken);
+      // The backend populates 'items.product', so we can directly use it
+      // Ensure the structure matches CartProduct interface
+      const fetchedItems: CartProduct[] = response.cart.items.map((item: any) => ({
+        _id: item.product._id,
+        name: item.product.name,
+        imageUrl: item.product.imageUrl,
+        price: item.product.price,
+        category: item.product.category,
+        brand: item.product.brand,
+        stock: item.product.stock,
+        rating: item.product.rating,
+        numReviews: item.product.numReviews,
+        description: item.product.description, // Ensure description is present
+        images: item.product.images, // Ensure images are present
+        specifications: item.product.specifications, // Ensure specifications are present
+        oldPrice: item.product.oldPrice, // Ensure oldPrice is present
+        quantity: item.quantity, // This is the quantity from the cart item
+      }));
+      setProductsInCart(fetchedItems);
+    } catch (err: any) {
+      console.error("Failed to fetch cart:", err);
+      setError(err.response?.data?.message || "Failed to load cart. Please try again.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Calculate subtotal for all items in the cart (no selection logic)
+  // Effect to fetch cart on component mount and when auth state changes
+  useEffect(() => {
+    fetchCart();
+  }, [isLoggedIn, authToken]); // Depend on isLoggedIn and authToken
+
+  // Function to update quantity of a product in the cart via backend
+  const updateQuantity = async (productId: string, delta: number) => {
+    const currentProduct = productsInCart.find(p => p._id === productId);
+    if (!currentProduct) return;
+
+    const newQuantity = Math.max(1, currentProduct.quantity + delta);
+
+    if (newQuantity > currentProduct.stock) {
+      setMessage({ type: 'error', text: `Cannot add more. Only ${currentProduct.stock} available for ${currentProduct.name}.` });
+      return;
+    }
+
+    if (!isLoggedIn || !authToken) {
+      setMessage({ type: 'error', text: 'Please log in to update your cart.' });
+      return;
+    }
+
+    try {
+      // Optimistic update (optional, but improves UX)
+      setProductsInCart(prev => prev.map(p => p._id === productId ? { ...p, quantity: newQuantity } : p));
+      await updateCartItemQuantityApi(productId, newQuantity, authToken);
+      setMessage({ type: 'success', text: `Quantity for "${currentProduct.name}" updated.` });
+      // Re-fetch cart to ensure consistency (especially after optimistic update)
+      fetchCart();
+    } catch (err: any) {
+      console.error("Error updating quantity:", err);
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to update quantity. Please try again.' });
+      // Revert optimistic update on error
+      fetchCart();
+    }
+  };
+
+  // Function to remove an item from the cart via backend
+  const removeItem = async (productId: string) => {
+    const productToRemove = productsInCart.find(p => p._id === productId);
+    if (!productToRemove) return;
+
+    if (!isLoggedIn || !authToken) {
+      setMessage({ type: 'error', text: 'Please log in to remove items from your cart.' });
+      return;
+    }
+
+    try {
+      // Optimistic update
+      setProductsInCart(prev => prev.filter(p => p._id !== productId));
+      await removeCartItemApi(productId, authToken);
+      setMessage({ type: 'success', text: `"${productToRemove.name}" removed from cart.` });
+      // Re-fetch cart to ensure consistency
+      fetchCart();
+    } catch (err: any) {
+      console.error("Error removing item:", err);
+      setMessage({ type: 'error', text: err.response?.data?.message || 'Failed to remove item. Please try again.' });
+      // Revert optimistic update on error
+      fetchCart();
+    }
+  };
+
+  // Function to apply a promo code (frontend logic only for now)
+  const applyPromoCode = () => {
+    if (promoCode.toUpperCase() === "SAVE10") {
+      setPromoApplied(true);
+      setMessage({ type: 'success', text: 'Promo code applied successfully!' });
+    } else {
+      setPromoApplied(false);
+      setMessage({ type: 'error', text: 'Invalid promo code.' });
+    }
+  };
+
+  // Calculate subtotal for all items in the cart
   const calculateSubtotal = () => {
     return productsInCart.reduce((total, product) => {
       // Ensure product.price and product.quantity are numbers
-      return total + product.price * product.quantity;
+      return total + (product.price || 0) * (product.quantity || 0);
     }, 0);
   };
 
@@ -130,48 +182,64 @@ const CartPage = () => {
   const tax = (subtotal - discount) * 0.16; // 16% VAT
   const total = subtotal - discount + shippingCost + tax;
 
-  // Star Rating component for product reviews
-  const StarRating = ({ rating, size = "w-4 h-4" }) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[1, 2, 3, 4, 5].map((star) => (
-          <Star
-            key={star}
-            className={`${size} ${
-              star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
   // Function to handle Web Share API for an individual product
-  const handleShareProduct = async (product) => {
+  const handleShareProduct = async (product: CartProduct) => {
     if (navigator.share) {
       try {
         await navigator.share({
           title: product.name,
           text: `Check out this product: ${product.name} - KES ${product.price.toLocaleString()}!`,
-          url: window.location.href, // You might want a specific product URL here in a real app
+          url: `${window.location.origin}/product/${product._id}`, // Use specific product URL
         });
-        console.log("Product shared successfully:", product.name);
+        setMessage({ type: 'success', text: `"${product.name}" shared successfully!` });
       } catch (error) {
         console.error("Error sharing product:", error);
+        setMessage({ type: 'error', text: 'Could not share product. Please try again.' });
       }
     } else {
-      console.log(
-        "Web Share API not supported in this browser for product sharing."
-      );
-      // Fallback for browsers that do not support Web Share API
-      alert(`To share ${product.name}, please copy this link: ${window.location.href}`);
+      const shareText = `Check out this product: ${product.name} - KES ${product.price.toLocaleString()}! ${window.location.origin}/product/${product._id}`;
+      navigator.clipboard.writeText(shareText)
+        .then(() => setMessage({ type: 'success', text: 'Product link and details copied to clipboard!' }))
+        .catch(() => setMessage({ type: 'error', text: 'Could not copy to clipboard.' }));
     }
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
+        <p className="text-gray-600 text-lg">Loading your cart...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
+        <div className="container mx-auto px-4 py-8">
+          <div className="max-w-2xl mx-auto text-center">
+            <div className="bg-white rounded-lg shadow-sm p-12">
+              <h1 className="text-3xl font-bold text-red-600 mb-4">
+                Error Loading Cart
+              </h1>
+              <p className="text-gray-600 mb-8 text-lg">{error}</p>
+              <button
+                onClick={fetchCart} // Allow user to retry fetching cart
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200"
+                title="Retry loading cart"
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // If the cart is empty, display an empty cart message
   if (productsInCart.length === 0) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20"> {/* Added pb-20 */}
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center pb-20">
         <div className="container mx-auto px-4 py-8">
           <div className="max-w-2xl mx-auto text-center">
             <div className="bg-white rounded-lg shadow-sm p-12">
@@ -183,13 +251,13 @@ const CartPage = () => {
                 Looks like you haven't added any items to your cart yet. Start
                 shopping to fill it up!
               </p>
-              <button
-                onClick={() => console.log("Navigating to shopping page")} // Placeholder action
-                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200"
+              <Link
+                to="/" // Assuming '/' is your homepage or product listing page
+                className="bg-red-600 hover:bg-red-700 text-white px-8 py-4 rounded-lg font-semibold text-lg transition-colors duration-200 inline-block"
                 title="Start browsing products"
               >
                 Start Shopping
-              </button>
+              </Link>
             </div>
           </div>
         </div>
@@ -198,7 +266,14 @@ const CartPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans pb-20"> {/* Added pb-20 for bottom spacing */}
+    <div className="min-h-screen bg-gray-50 font-sans pb-20">
+      {/* Message Box for feedback */}
+      {message && (
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-md shadow-lg text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
+          {message.text}
+        </div>
+      )}
+
       {/* Header */}
       <div className="bg-white border-b sticky top-0 z-40">
         <div className="container mx-auto px-4 py-4">
@@ -206,7 +281,7 @@ const CartPage = () => {
             <div className="flex items-center gap-4">
               <button
                 className="lg:hidden p-2 hover:bg-gray-100 rounded-lg"
-                onClick={() => console.log("Go back")} // Placeholder action
+                onClick={() => window.history.back()} // Go back to previous page
                 title="Go back to previous page"
               >
                 <ArrowLeft className="w-5 h-5" />
@@ -215,7 +290,7 @@ const CartPage = () => {
                 Shopping Cart
               </h1>
               <span className="bg-red-100 text-red-600 px-3 py-1 rounded-full text-sm font-medium">
-                {cartItems.length} {cartItems.length === 1 ? "item" : "items"}
+                {productsInCart.length} {productsInCart.length === 1 ? "item" : "items"}
               </span>
             </div>
             <div className="hidden md:flex items-center gap-4 text-sm text-gray-600">
@@ -246,16 +321,17 @@ const CartPage = () => {
             <div className="bg-white rounded-lg shadow-sm overflow-hidden">
               <div className="divide-y divide-gray-200">
                 {productsInCart.map((product) => {
-                  const itemQuantity =
-                    cartItems.find((item) => item.productId === product.id)
-                      ?.quantity || 0;
-                  const savings = product.originalPrice - product.price;
+                  // Use product.quantity from the `productsInCart` state directly
+                  const itemQuantity = product.quantity;
+                  const savings = product.oldPrice && product.oldPrice > product.price
+                    ? product.oldPrice - product.price
+                    : 0;
 
                   return (
                     <div
-                      key={product.id}
+                      key={product._id} // Use product._id for key
                       className={`p-6 ${
-                        !product.inStock ? "bg-gray-50 opacity-70" : ""
+                        product.stock <= 0 ? "bg-gray-50 opacity-70" : ""
                       }`}
                     >
                       <div className="flex flex-col sm:flex-row gap-4">
@@ -266,8 +342,12 @@ const CartPage = () => {
                               src={product.imageUrl}
                               alt={product.name}
                               className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-lg border border-gray-200"
+                              onError={(e) => {
+                                e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
+                                e.currentTarget.onerror = null;
+                              }}
                             />
-                            {!product.inStock && (
+                            {product.stock <= 0 && (
                               <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
                                 <span className="text-white text-xs font-medium">
                                   Out of Stock
@@ -289,9 +369,9 @@ const CartPage = () => {
 
                               {/* Rating */}
                               <div className="flex items-center gap-2 mb-3">
-                                <StarRating rating={product.rating} />
+                                <StarRating rating={Math.round(product.rating || 0)} />
                                 <span className="text-sm text-gray-600">
-                                  {product.rating} ({product.reviews} reviews)
+                                  {product.rating || 0} ({product.numReviews || 0} reviews)
                                 </span>
                               </div>
 
@@ -304,7 +384,7 @@ const CartPage = () => {
                                   <>
                                     <span className="text-sm text-gray-500 line-through">
                                       KES{" "}
-                                      {product.originalPrice.toLocaleString()}
+                                      {product.oldPrice?.toLocaleString()}
                                     </span>
                                     <span className="text-sm text-green-600 font-medium">
                                       Save KES {savings.toLocaleString()}
@@ -314,9 +394,9 @@ const CartPage = () => {
                               </div>
 
                               {/* Stock Status */}
-                              {product.inStock ? (
+                              {product.stock > 0 ? (
                                 <p className="text-green-600 text-sm font-medium">
-                                  ✓ In Stock
+                                  ✓ In Stock ({product.stock} available)
                                 </p>
                               ) : (
                                 <p className="text-red-600 text-sm font-medium">
@@ -328,11 +408,11 @@ const CartPage = () => {
                             {/* Quantity and Actions */}
                             <div className="flex flex-col items-end gap-3 mt-4 sm:mt-0">
                               {/* Quantity Controls */}
-                              {product.inStock ? (
+                              {product.stock > 0 ? (
                                 <div className="flex items-center border border-gray-300 rounded-lg">
                                   <button
                                     onClick={() =>
-                                      updateQuantity(product.id, -1)
+                                      updateQuantity(product._id, -1)
                                     }
                                     className="p-2 hover:bg-gray-100 rounded-l-lg transition-colors"
                                     disabled={itemQuantity <= 1}
@@ -345,9 +425,10 @@ const CartPage = () => {
                                   </span>
                                   <button
                                     onClick={() =>
-                                      updateQuantity(product.id, 1)
+                                      updateQuantity(product._id, 1)
                                     }
                                     className="p-2 hover:bg-gray-100 rounded-r-lg transition-colors"
+                                    disabled={itemQuantity >= product.stock} // Disable if max stock reached
                                     title="Increase quantity"
                                   >
                                     <Plus className="w-4 h-4" />
@@ -355,7 +436,7 @@ const CartPage = () => {
                                 </div>
                               ) : (
                                 <div className="text-gray-500 text-sm italic">
-                                  Cannot add out of stock items
+                                  Item out of stock
                                 </div>
                               )}
                               {/* Action Buttons */}
@@ -370,7 +451,7 @@ const CartPage = () => {
                                 </button>
                                 {/* Remove item button */}
                                 <button
-                                  onClick={() => removeItem(product.id)}
+                                  onClick={() => removeItem(product._id)}
                                   className="p-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                   title="Remove item from cart"
                                 >
@@ -398,7 +479,7 @@ const CartPage = () => {
 
                 <div className="space-y-3 text-sm">
                   <div className="flex justify-between">
-                    <span>Items ({cartItems.length}):</span>
+                    <span>Items ({productsInCart.length}):</span>
                     <span>KES {subtotal.toLocaleString()}</span>
                   </div>
 
@@ -474,20 +555,20 @@ const CartPage = () => {
                   <button
                     onClick={() => console.log("Proceeding to checkout")} // Placeholder action
                     className="flex-1 bg-red-600 hover:bg-red-700 text-white py-4 rounded-lg font-semibold text-lg transition-colors duration-200 disabled:bg-gray-300 disabled:cursor-not-allowed"
-                    disabled={cartItems.length === 0} // Disable if cart is empty
+                    disabled={productsInCart.length === 0} // Disable if cart is empty
                     title="Proceed to finalize your order"
                   >
                     Proceed to Checkout
                   </button>
                 </div>
 
-                <button
-                  onClick={() => console.log("Continuing shopping")} // Placeholder action
-                  className="w-full mt-3 border-2 border-red-600 text-red-600 hover:bg-red-50 py-3 rounded-lg font-semibold transition-colors duration-200"
+                <Link
+                  to="/" // Link to homepage or product listing
+                  className="w-full mt-3 border-2 border-red-600 text-red-600 hover:bg-red-50 py-3 rounded-lg font-semibold transition-colors duration-200 inline-block text-center"
                   title="Continue browsing more products"
                 >
                   Continue Shopping
-                </button>
+                </Link>
 
                 {/* Trust Badges */}
                 <div className="mt-6 pt-6 border-t">

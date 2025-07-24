@@ -10,8 +10,8 @@ const router = express.Router();
 router.route('/').post(protect, addToCart);
 
 // You might add other routes here later, e.g.,
-// router.route('/').get(protect, getCart); // Get user's cart
-// router.route('/:id').put(protect, updateCartItemQuantity); // Update item quantity
-// router.route('/:id').delete(protect, removeCartItem); // Remove item from cart
+router.route('/').get(protect, getCart); // Get user's cart
+router.route('/:id').put(protect, updateCartItemQuantity); // Update item quantity
+router.route('/:id').delete(protect, removeCartItem); // Remove item from cart
 
 export default router;
