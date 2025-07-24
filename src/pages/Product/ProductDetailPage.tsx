@@ -1,6 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProductById, getProductsByCategory, Product, addToCartApi } from '@/services/product-service';
+import {
+  getProductById,
+  getProductsByCategory,
+  Product,
+  addToCartApi,
+  addToWishlistApi,
+  getWishlistApi, // Import getWishlistApi
+} from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, Share2, Star } from 'lucide-react';
@@ -34,20 +41,21 @@ const StarRating = ({ rating, size = "w-5 h-5" }) => {
   );
 };
 
-const addProductToWishlist = (product: Product): boolean => {
-  try {
-    const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-    if (!wishlist.some((item: Product) => item._id === product._id)) {
-      wishlist.push(product);
-      localStorage.setItem('wishlist', JSON.stringify(wishlist));
-      return true;
-    }
-    return false;
-  } catch (error) {
-    console.error("Failed to add product to wishlist:", error);
-    return false;
-  }
-};
+// This local storage helper is no longer needed as we're using the backend API
+// const addProductToWishlist = (product: Product): boolean => {
+//   try {
+//     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
+//     if (!wishlist.some((item: Product) => item._id === product._id)) {
+//       wishlist.push(product);
+//       localStorage.setItem('wishlist', JSON.stringify(wishlist));
+//       return true;
+//     }
+//     return false;
+//   } catch (error) {
+//     console.error("Failed to add product to wishlist:", error);
+//     return false;
+//   }
+// };
 
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -57,11 +65,28 @@ const ProductDetailPage: React.FC = () => {
   const [mainImage, setMainImage] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  // --- REMOVE message state ---
-  // const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [isWishlisted, setIsWishlisted] = useState<boolean>(false); // New state for wishlist status
 
   const { isLoggedIn } = useAuth();
   const authToken = localStorage.getItem('userToken');
+
+  // Function to check if the current product is in the wishlist
+  const checkWishlistStatus = async (productId: string, token: string) => {
+    if (!token) {
+      setIsWishlisted(false);
+      return;
+    }
+    try {
+      const wishlistResponse = await getWishlistApi(token);
+      const wishlistItems = wishlistResponse.wishlist?.items || [];
+      const itemInWishlist = wishlistItems.some((item: any) => item.product._id === productId);
+      setIsWishlisted(itemInWishlist);
+    } catch (err) {
+      console.error("Error checking wishlist status:", err);
+      setIsWishlisted(false); // Assume not wishlisted on error
+    }
+  };
+
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -74,7 +99,7 @@ const ProductDetailPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // --- No need to clear message here anymore ---
+        // No need to clear message here anymore as we're using toast
         // setMessage(null);
 
         const fetchedProduct = await getProductById(id);
@@ -82,6 +107,13 @@ const ProductDetailPage: React.FC = () => {
           setProduct(fetchedProduct as DetailedProduct);
           setMainImage(fetchedProduct.imageUrl);
           setQuantity(1);
+
+          // Check wishlist status after product is fetched
+          if (isLoggedIn && authToken) {
+            checkWishlistStatus(fetchedProduct._id, authToken);
+          } else {
+            setIsWishlisted(false); // Not logged in, so not wishlisted
+          }
 
           const productsInSameCategory = await getProductsByCategory(fetchedProduct.category);
           const filteredRelated = productsInSameCategory
@@ -104,7 +136,6 @@ const ProductDetailPage: React.FC = () => {
       } catch (err) {
         console.error("Failed to fetch product details:", err);
         setError("Failed to load product details. Please try again later.");
-        // --- Use toast for error messages during fetch as well if desired ---
         toast.error("Failed to load product details. Please try again later.");
       } finally {
         setLoading(false);
@@ -112,7 +143,7 @@ const ProductDetailPage: React.FC = () => {
     };
 
     fetchProductDetails();
-  }, [id]);
+  }, [id, isLoggedIn, authToken]); // Re-run effect when product ID or auth state changes
 
   if (loading) {
     return (
@@ -146,40 +177,47 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const handleAddToWishlist = () => {
-    if (addProductToWishlist(product)) {
-      // --- Use toast.success ---
+  // Handle adding product to wishlist via backend API
+  const handleAddToWishlist = async () => {
+    if (!isLoggedIn || !authToken) {
+      toast.error('Please log in to add items to your wishlist.');
+      return;
+    }
+    try {
+      await addToWishlistApi(product._id, authToken);
+      setIsWishlisted(true); // Update state to reflect it's wishlisted
       toast.success(`"${product.name}" added to your wishlist!`);
-    } else {
-      // --- Use toast.error ---
-      toast.error(`"${product.name}" is already in your wishlist!`);
+    } catch (wishlistError: any) {
+      console.error("Failed to add to wishlist:", wishlistError);
+      // Check for specific error message if product is already in wishlist (e.g., 409 Conflict)
+      if (wishlistError.response?.status === 409) {
+        toast.info(`"${product.name}" is already in your wishlist!`);
+        setIsWishlisted(true); // Ensure state is true if backend confirms it's already there
+      } else {
+        toast.error(wishlistError.response?.data?.message || 'Failed to add to wishlist. Please try again.');
+      }
     }
   };
 
   const handleAddToCart = async () => {
     if (!isLoggedIn || !authToken) {
-      // --- Use toast.error ---
       toast.error('Please log in to add items to your cart.');
       return;
     }
     if (product.stock <= 0) {
-      // --- Use toast.error ---
       toast.error('This product is out of stock.');
       return;
     }
     if (quantity > product.stock) {
-      // --- Use toast.error ---
       toast.error(`Cannot add ${quantity} items. Only ${product.stock} available.`);
       return;
     }
 
     try {
       await addToCartApi(product._id, quantity, authToken);
-      // --- Use toast.success ---
       toast.success(`Added ${quantity} of "${product.name}" to cart!`);
     } catch (cartError: any) {
       console.error("Failed to add to cart:", cartError);
-      // --- Use toast.error ---
       toast.error(cartError.response?.data?.message || 'Failed to add to cart. Please try again.');
     }
   };
@@ -192,18 +230,16 @@ const ProductDetailPage: React.FC = () => {
           text: `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}...`,
           url: window.location.href,
         });
-        // --- Use toast.success ---
         toast.success('Product shared successfully!');
       } catch (shareError) {
         console.error('Error sharing product:', shareError);
-        // --- Use toast.error ---
         toast.error('Could not share product. Please try again.');
       }
     } else {
       const shareText = `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}... ${window.location.href}`;
       navigator.clipboard.writeText(shareText)
-        .then(() => toast.success('Product link and details copied to clipboard!')) // --- Use toast.success ---
-        .catch(() => toast.error('Could not copy to clipboard.')); // --- Use toast.error ---
+        .then(() => toast.success('Product link and details copied to clipboard!'))
+        .catch(() => toast.error('Could not copy to clipboard.'));
     }
   };
 
@@ -217,12 +253,7 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20">
-      {/* --- REMOVE the custom message box div --- */}
-      {/* {message && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-md shadow-lg text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
-          {message.text}
-        </div>
-      )} */}
+      {/* The custom message box div is removed as 'sonner' toast handles messages */}
 
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex">
@@ -339,7 +370,7 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Button
               onClick={handleAddToCart}
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
@@ -352,7 +383,7 @@ const ProductDetailPage: React.FC = () => {
               className="bg-gray-200 hover:bg-gray-300 text-[#D81E05] rounded-full px-4 py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
               aria-label="Add to Wishlist"
             >
-              <Heart />
+              <Heart className={isWishlisted ? "fill-red-500 text-red-500" : ""} /> {/* Dynamic fill */}
               <span className="hidden sm:inline">Wishlist</span>
             </Button>
             <Button

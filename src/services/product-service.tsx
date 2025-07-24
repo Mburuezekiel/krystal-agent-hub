@@ -50,6 +50,7 @@ export const ALL_CATEGORIES = [
 
 const API_URL = "https://krystal-agent-hub.onrender.com/api/products";
 const CART_API_URL = "https://krystal-agent-hub.onrender.com/api/cart";
+const WISHLIST_API_URL = "https://krystal-agent-hub.onrender.com/api/wishlist";
 
 const getProductsArrayFromResponse = (responseData: any): Product[] => {
   if (responseData && Array.isArray(responseData.products)) {
@@ -164,7 +165,6 @@ export const getPersonalizedRecommendations = async (
   limit: number = 6
 ): Promise<Product[]> => {
   try {
-    // No 'config' object with headers is passed here, which is correct for a public endpoint.
     const response = await axios.get(
       `${API_URL}/recommendations?userId=${userId || ""}&limit=${limit}`
     );
@@ -293,8 +293,6 @@ export const uploadProductImageApi = async (
   }
 };
 
-
- 
 export const addToCartApi = async (
   productId: string,
   quantity: number,
@@ -307,15 +305,18 @@ export const addToCartApi = async (
         Authorization: `Bearer ${token}`,
       },
     };
-    const response = await axios.post(CART_API_URL, { productId, quantity }, config);
+    const response = await axios.post(
+      CART_API_URL,
+      { productId, quantity },
+      config
+    );
     return response.data;
   } catch (error) {
     console.error("Error adding product to cart:", error);
-    // You might want to throw the error to be caught by the component
     throw error;
   }
 };
- 
+
 export const getCartApi = async (token: string): Promise<any> => {
   try {
     const config = {
@@ -331,13 +332,6 @@ export const getCartApi = async (token: string): Promise<any> => {
   }
 };
 
-/**
- * Updates the quantity of a specific product in the user's cart.
- * @param {string} productId - The ID of the product to update.
- * @param {number} quantity - The new quantity for the product.
- * @param {string} token - The user's authentication token.
- * @returns {Promise<any>} A promise that resolves with the updated cart data.
- */
 export const updateCartItemQuantityApi = async (
   productId: string,
   quantity: number,
@@ -350,20 +344,21 @@ export const updateCartItemQuantityApi = async (
         Authorization: `Bearer ${token}`,
       },
     };
-    const response = await axios.put(`${CART_API_URL}/${productId}`, { quantity }, config);
+    const response = await axios.put(
+      `${CART_API_URL}/${productId}`,
+      { quantity },
+      config
+    );
     return response.data;
   } catch (error) {
-    console.error(`Error updating quantity for product ${productId} in cart:`, error);
+    console.error(
+      `Error updating quantity for product ${productId} in cart:`,
+      error
+    );
     throw error;
   }
 };
 
-/**
- * Removes a specific product from the user's cart.
- * @param {string} productId - The ID of the product to remove.
- * @param {string} token - The user's authentication token.
- * @returns {Promise<any>} A promise that resolves with the updated cart data.
- */
 export const removeCartItemApi = async (
   productId: string,
   token: string
@@ -378,6 +373,61 @@ export const removeCartItemApi = async (
     return response.data;
   } catch (error) {
     console.error(`Error removing product ${productId} from cart:`, error);
+    throw error;
+  }
+};
+
+export const addToWishlistApi = async (
+  productId: string,
+  token: string
+): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.post(WISHLIST_API_URL, { productId }, config);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding product to wishlist:", error);
+    throw error;
+  }
+};
+
+export const getWishlistApi = async (token: string): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.get(WISHLIST_API_URL, config);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching wishlist:", error);
+    throw error;
+  }
+};
+
+export const removeFromWishlistApi = async (
+  productId: string,
+  token: string
+): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.delete(
+      `${WISHLIST_API_URL}/${productId}`,
+      config
+    );
+    return response.data;
+  } catch (error) {
+    console.error(`Error removing product ${productId} from wishlist:`, error);
     throw error;
   }
 };

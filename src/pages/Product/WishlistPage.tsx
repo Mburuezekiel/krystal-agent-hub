@@ -13,7 +13,7 @@ const getWishlist = (): Product[] => {
 // Function to remove product from wishlist in localStorage
 const removeProductFromWishlist = (productId: string) => {
   let wishlist: Product[] = JSON.parse(localStorage.getItem('wishlist') || '[]');
-  wishlist = wishlist.filter(item => item.id !== productId);
+  wishlist = wishlist.filter(item => item._id !== productId);
   localStorage.setItem('wishlist', JSON.stringify(wishlist));
   return wishlist;
 };
@@ -57,8 +57,8 @@ const WishlistPage: React.FC = () => {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {wishlistItems.map((product) => (
-            <Card key={product.id} className="relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
-              <Link to={`/product/${product.id}`} className="group block">
+            <Card key={product._id} className="relative rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
+              <Link to={`/product/${product._id}`} className="group block">
                 <CardContent className="p-0">
                   <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
                     <img
@@ -91,7 +91,7 @@ const WishlistPage: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.preventDefault(); // Prevent navigating to product details
-                        handleRemoveFromWishlist(product.id);
+                        handleRemoveFromWishlist(product._id);
                       }}
                       className="mt-2 inline-flex items-center justify-center p-2 rounded-full bg-white text-[#D81E05] hover:bg-gray-100 transition-colors"
                       aria-label="Remove from wishlist"
