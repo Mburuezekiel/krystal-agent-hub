@@ -108,7 +108,7 @@ const Header: React.FC = () => {
     <div className="flex-grow relative">
       <Input
         type="search"
-        placeholder="Search Krystal..."
+        placeholder="Search  products on Krystal..."
         className="w-full pl-10 pr-4 rounded-full bg-white border border-gray-300 focus:ring-2 focus:ring-[#FFD700] text-gray-800 placeholder:text-gray-500 text-base"
       />
       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 h-5 w-5" />
