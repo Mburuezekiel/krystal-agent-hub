@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ALL_CATEGORIES } from "@/services/product-service";
+// ALL_CATEGORIES is not used in this component, so it can be removed if not needed elsewhere
+// import { ALL_CATEGORIES } from "@/services/product-service";
 import { Card, CardContent } from "../ui/card";
 import {
   Carousel,
@@ -48,14 +49,35 @@ const homepageCategories: CategoryDisplay[] = [
 ];
 
 const TrendingCategoriesSection: React.FC = () => {
-  const recommendations: Product[] = getPersonalizedRecommendations(
-    undefined,
-    8
-  );
+  // 1. State for recommendations and loading/error
+  const [recommendations, setRecommendations] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
+  // 2. useEffect to fetch data
+  useEffect(() => {
+    const fetchRecommendations = async () => {
+      try {
+        setLoading(true);
+        setError(null); // Clear previous errors
+        // AWAIT the async function call
+        const data = await getPersonalizedRecommendations(undefined, 8);
+        setRecommendations(data);
+      } catch (err) {
+        console.error("Failed to fetch personalized recommendations:", err);
+        setError("Could not load recommendations.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRecommendations();
+  }, []); // Empty dependency array: runs once on mount
+
+  // Check if there are recommendations AFTER data has been fetched
   const hasRecommendations = recommendations.length > 0;
 
-  // Carousel auto-slide state and refs
+  // Carousel auto-slide state and refs (remain the same)
   const [api, setApi] = useState<CarouselApi>();
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const AUTOPLAY_INTERVAL = 3000; // 3 seconds
@@ -95,18 +117,117 @@ const TrendingCategoriesSection: React.FC = () => {
     };
   }, [api, startAutoplay, stopAutoplay]);
 
-  // Pause on click (if you don't want it to continue sliding after manual interaction)
-  // useEffect(() => {
-  //   if (!api) return;
-  //   api.on("pointerDown", stopAutoplay);
-  //   return () => {
-  //     api.off("pointerDown", stopAutoplay);
-  //   };
-  // }, [api, stopAutoplay]);
+  // Handle loading and error states for the entire section or just the carousel
+  if (loading) {
+    return (
+      <section className="py-8 bg-[#F8F8F8] ">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]">
+          🛍️ Shop by Category 🛍️
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {homepageCategories.map((category) => (
+            <Link
+              to={`/category/${encodeURIComponent(category.name)}`}
+              key={category.name}
+              className="group block relative rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="w-full aspect-square bg-gray-100">
+                <img
+                  src={category.imageUrl}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 flex items-center justify-center transition-all duration-300">
+                <h3 className="text-white text-xl md:text-2xl font-bold text-center drop-shadow-lg">
+                  {category.name}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <br />
+        <h6 className="text-3xl md:text-xl bg-orange-500 font-bold text-center mb-8 text-[#F8F8F8]">
+          Picked For You
+        </h6>
+        <div className="text-center p-8">Loading recommendations...</div>
+      </section>
+    );
+  }
 
+  if (error) {
+    return (
+      <section className="py-8 bg-[#F8F8F8] ">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]">
+          🛍️ Shop by Category 🛍️
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {homepageCategories.map((category) => (
+            <Link
+              to={`/category/${encodeURIComponent(category.name)}`}
+              key={category.name}
+              className="group block relative rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="w-full aspect-square bg-gray-100">
+                <img
+                  src={category.imageUrl}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 flex items-center justify-center transition-all duration-300">
+                <h3 className="text-white text-xl md:text-2xl font-bold text-center drop-shadow-lg">
+                  {category.name}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <br />
+        <h6 className="text-3xl md:text-xl bg-orange-500 font-bold text-center mb-8 text-[#F8F8F8]">
+          Picked For You
+        </h6>
+        <div className="text-center p-8 text-red-500">Error: {error}</div>
+      </section>
+    );
+  }
 
+  // If no recommendations are available after loading, show a message
   if (!hasRecommendations) {
-    return null;
+    return (
+      <section className="py-8 bg-[#F8F8F8] ">
+        <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 text-[#222222]">
+          🛍️ Shop by Category 🛍️
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+          {homepageCategories.map((category) => (
+            <Link
+              to={`/category/${encodeURIComponent(category.name)}`}
+              key={category.name}
+              className="group block relative rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="w-full aspect-square bg-gray-100">
+                <img
+                  src={category.imageUrl}
+                  alt={category.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+              <div className="absolute inset-0 bg-black bg-opacity-40 group-hover:bg-opacity-60 flex items-center justify-center transition-all duration-300">
+                <h3 className="text-white text-xl md:text-2xl font-bold text-center drop-shadow-lg">
+                  {category.name}
+                </h3>
+              </div>
+            </Link>
+          ))}
+        </div>
+        <br />
+        <h6 className="text-3xl md:text-xl bg-orange-500 font-bold text-center mb-8 text-[#F8F8F8]">
+          Picked For You
+        </h6>
+        <div className="text-center p-8">No recommendations found at the moment.</div>
+      </section>
+    );
   }
 
   return (
@@ -143,20 +264,20 @@ const TrendingCategoriesSection: React.FC = () => {
       <Carousel
         opts={{
           align: "start",
-          loop: true, // Enable native loop if your Embla Carousel version supports it easily for continuous sliding
+          loop: true,
         }}
-        setApi={setApi} // Set the API instance here
-        onMouseEnter={stopAutoplay} // Pause on hover
-        onMouseLeave={startAutoplay} // Resume on mouse leave
+        setApi={setApi}
+        onMouseEnter={stopAutoplay}
+        onMouseLeave={startAutoplay}
         className="w-full"
       >
         <CarouselContent className="-ml-4">
           {recommendations.map((product) => (
             <CarouselItem
-              key={product.id}
+              key={product._id}
               className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-4"
             >
-              <Link to={`/product/${product.id}`} className="group block">
+              <Link to={`/product/${product._id}`} className="group block"> {/* Use product._id here */}
                 <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                   <CardContent className="p-0">
                     <div className="w-full aspect-square bg-gray-100 overflow-hidden">

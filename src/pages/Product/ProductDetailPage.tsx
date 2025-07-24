@@ -18,7 +18,7 @@ interface DetailedProduct extends Product {
 
 const addProductToWishlist = (product: Product) => {
   const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-  if (!wishlist.some((item: Product) => item.id === product.id)) {
+  if (!wishlist.some((item: Product) => item._id === product._id)) {
     wishlist.push(product);
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
     return true;
