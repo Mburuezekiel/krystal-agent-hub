@@ -17,7 +17,7 @@ const StarRating = ({ rating, size = "w-4 h-4" }) => {
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
         <Star
-          key={star} // Key for list items
+          key={star}
           className={`${size} ${
             star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
           }`}
@@ -27,86 +27,66 @@ const StarRating = ({ rating, size = "w-4 h-4" }) => {
   );
 };
 
-// --- Helper function for category name formatting (slugification) ---
-// This function should be placed outside of any React components
-// (e.g., in a utils file or at the top level of this file).
 const formatCategoryNameForLink = (name: string): string => {
   if (!name) return '';
 
   return name
-    .toLowerCase() // Start with all lowercase for consistent processing
-    .replace(/&/g, 'and') // Replace '&' with 'and' for readability in URL
-    .replace(/[^a-z0-9\s-]/g, '') // Remove all non-alphanumeric characters except spaces and hyphens
-    .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
-    .trim() // Trim leading/trailing spaces
-    .split(' ') // Split into words
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize first letter of each word
-    .join('-'); // Join words with hyphens to form the slug
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .split(' ')
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .join('-');
 };
-// ------------------------------------------------------------------
 
-/**
- * ProductCard component displays a single product.
- * @param {object} props - The component props.
- * @param {object} props.product - The product object.
- * @param {string} props.product._id - Unique ID of the product.
- * @param {string} props.product.imageUrl - URL of the product image.
- * @param {string} props.product.name - Name of the product.
- * @param {string} props.product.brand - Brand of the product.
- * @param {number} props.product.rating - Rating of the product.
- * @param {number} props.product.reviews - Number of reviews for the product.
- * @param {number} props.product.price - Current price of the product.
- * @param {number} props.product.originalPrice - Original price of the product (for savings).
- * @param {number} props.product.stock - Stock quantity of the product.
- */
+
 const ProductCard = ({ product }) => {
   if (!product) return null;
 
-  // Calculate savings if originalPrice is available and greater than current price
   const savings = product.originalPrice && product.originalPrice > product.price
     ? product.originalPrice - product.price
     : 0;
 
   return (
     <Link
-      to={`/product/${product._id}`} // Link to the product detail page using _id
+      to={`/product/${product._id}`}
       className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group"
     >
-      <div className="relative w-full h-40 overflow-hidden">
+      <div className="relative w-full h-32 sm:h-40 overflow-hidden">
         <img
           src={product.imageUrl}
           alt={product.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          // Add a fallback for image loading errors
           onError={(e) => {
-            e.currentTarget.src = `https://placehold.co/160x160/cccccc/333333?text=No+Image`;
-            e.currentTarget.onerror = null; // Prevent infinite loop
+            e.currentTarget.src = `https://placehold.co/128x128/cccccc/333333?text=No+Image`;
+            e.currentTarget.onerror = null;
           }}
         />
         {product.stock < 1 && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white text-sm font-medium">Out of Stock</span>
+            <span className="text-white text-xs sm:text-sm font-medium">Out of Stock</span>
           </div>
         )}
       </div>
-      <div className="p-3">
-        <h3 className="font-semibold text-gray-800 text-sm mb-1 line-clamp-2">
+      <div className="p-2 sm:p-3">
+        <h3 className="font-semibold text-gray-800 text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2">
           {product.name}
         </h3>
-        <p className="text-gray-600 text-xs mb-2 line-clamp-1">
+        <p className="text-gray-600 text-[0.65rem] sm:text-xs mb-1 line-clamp-1">
           {product.brand}
         </p>
-        <div className="flex items-center gap-1 mb-2">
-          {/* Ensure product.rating is a number for StarRating */}
+        <div className="flex items-center gap-1 mb-1">
           <StarRating rating={Math.round(product.rating || 0)} size="w-3 h-3" />
-          <span className="text-xs text-gray-500">({product.numReviews || 0})</span> {/* Use numReviews from Product interface */}
+          <span className="text-[0.6rem] sm:text-xs text-gray-500">({product.numReviews || 0})</span>
         </div>
         <div className="flex items-baseline gap-1">
-          <span className="text-base font-bold text-gray-900">
+          <span className="text-sm sm:text-base font-bold text-gray-900">
             KES {product.price.toLocaleString()}
           </span>
           {savings > 0 && (
-            <span className="text-xs text-gray-500 line-through">
+            <span className="text-[0.6rem] sm:text-xs text-gray-500 line-through">
               KES {product.originalPrice.toLocaleString()}
             </span>
           )}
@@ -133,16 +113,13 @@ const CategoryListPage = () => {
     const fetchCategoryData = async () => {
       try {
         setLoading(true);
-        setError(null); // Clear previous errors
+        setError(null);
 
-        // Await the result of getAllCategories() to get the actual array of category names
         const categories = await getAllCategories();
 
-        // Use Promise.all to fetch products for all categories concurrently
         const categoryData = await Promise.all(
           categories.map(async (categoryName) => {
-            // Await getProductsByCategory as it's an async function
-            const products = await getProductsByCategory(categoryName, 3);
+            const products = await getProductsByCategory(categoryName, 4);
             return { name: categoryName, products };
           })
         );
@@ -156,37 +133,34 @@ const CategoryListPage = () => {
     };
 
     fetchCategoryData();
-  }, []); // Empty dependency array means this effect runs once on mount
+  }, []);
 
-  // Display loading state
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 pb-24">
         <p className="text-gray-600 text-lg">Loading categories...</p>
       </div>
     );
   }
 
-  // Display error state
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 pb-24">
         <p className="text-red-600 text-lg">{error}</p>
       </div>
     );
   }
 
-  // Display message if no categories are found after loading
   if (categoriesWithProducts.length === 0) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 pb-24">
         <p className="text-gray-600 text-lg">No categories found.</p>
       </div>
     );
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen font-inter">
+    <div className="container mx-auto px-4 py-8 bg-gray-50 min-h-screen pb-24 font-inter">
       <h1 className="text-3xl font-bold text-gray-900 mb-8 text-center lg:text-left">
         Shop by Category
       </h1>
@@ -194,33 +168,31 @@ const CategoryListPage = () => {
       <div className="space-y-12">
         {categoriesWithProducts.map((category) => (
           <section
-            key={category.name} // Unique key for each category section
-            className="bg-white rounded-lg shadow-md p-6"
+            key={category.name}
+            className="bg-white rounded-lg shadow-md p-4 sm:p-6"
           >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-semibold text-gray-800 capitalize">
+            <div className="flex justify-between items-center mb-4 sm:mb-6">
+              <h2 className="text-xl sm:text-2xl font-semibold text-gray-800 capitalize">
                 {category.name}
               </h2>
-              {/* Apply formatCategoryNameForLink to the category link */}
               <Link
                 to={`/category/${formatCategoryNameForLink(category.name)}`}
-                className="flex items-center text-red-600 hover:text-red-700 font-medium group"
+                className="flex items-center text-red-600 hover:text-red-700 font-medium group text-sm sm:text-base"
                 title={`View all products in ${category.name}`}
               >
                 View More
-                <ChevronRight className="w-5 h-5 ml-1 group-hover:translate-x-1 transition-transform" />
+                <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5 ml-1 group-hover:translate-x-1 transition-transform" />
               </Link>
             </div>
 
             {category.products.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
                 {category.products.map((product) => (
-                  // Use product._id as the unique key for ProductCard components
                   <ProductCard key={product._id} product={product} />
                 ))}
               </div>
             ) : (
-              <p className="text-gray-600 italic">
+              <p className="text-gray-600 italic text-sm">
                 No products available in this category yet.
               </p>
             )}
