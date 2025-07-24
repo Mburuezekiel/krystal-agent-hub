@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star, ShoppingCart, Heart } from 'lucide-react'; // Import ShoppingCart and Heart
+import { Star } from 'lucide-react'; // Removed ShoppingCart and Heart imports
 import { getProductsByCategory, Product } from '@/services/product-service';
 import { Card, CardContent } from '@/components/ui/card';
-import { Button } from '@/components/ui/button'; // Assuming you have a Button component
+// Removed Button import as it's no longer used for product card actions
 
 // StarRating component (reused for consistency)
 const StarRating = ({ rating, size = "w-4 h-4" }) => {
@@ -132,17 +132,7 @@ const CategoryPage: React.FC = () => {
     setFilteredProducts(currentProducts);
   }, [allProducts, selectedPriceRange, selectedBrand, selectedRating, sortBy]); // Dependencies for filter/sort logic
 
-  // Placeholder for adding to cart/wishlist functionality
-  const handleAddToCart = (productId: string) => {
-    console.log(`Adding product ${productId} to cart`);
-    // Implement your actual add to cart logic here (e.g., using context, Redux, API call)
-  };
-
-  const handleAddToWishlist = (productId: string) => {
-    console.log(`Adding product ${productId} to wishlist`);
-    // Implement your actual add to wishlist logic here
-  };
-
+  // Removed handleAddToCart and handleAddToWishlist functions as they are no longer used.
 
   // Render loading, error, or no products found states
   if (loading) {
@@ -194,6 +184,7 @@ const CategoryPage: React.FC = () => {
         <aside className="w-full md:w-64 bg-white p-6 rounded-lg shadow-sm flex-shrink-0 hidden md:block">
           <h2 className="text-xl font-semibold mb-6 text-[#222222]">Filters</h2>
 
+          {/* Price Range Filter */}
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3 text-[#222222]">Price Range</h3>
             <ul className="space-y-2 text-sm text-gray-700">
@@ -240,6 +231,7 @@ const CategoryPage: React.FC = () => {
             </ul>
           </div>
 
+          {/* Brand Filter */}
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3 text-[#222222]">Brand</h3>
             <ul className="space-y-2 text-sm text-gray-700">
@@ -264,6 +256,7 @@ const CategoryPage: React.FC = () => {
             </ul>
           </div>
 
+          {/* Customer Reviews Filter (Desktop Only) */}
           <div className="mb-6">
             <h3 className="text-lg font-medium mb-3 text-[#222222]">Customer Reviews</h3>
             <ul className="space-y-2 text-sm text-gray-700">
@@ -317,11 +310,11 @@ const CategoryPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Mobile Filters and Sort By (Two Columns) */}
+              {/* Mobile Filters and Sort By */}
               <div className="md:hidden grid grid-cols-2 gap-2 w-full">
                 {/* Mobile Price Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label> {/* Added font-medium for clarity */}
+                  {/* <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label> */}
                   <select
                     id="price-filter-mobile"
                     value={selectedPriceRange}
@@ -338,7 +331,7 @@ const CategoryPage: React.FC = () => {
 
                 {/* Mobile Brand Filter */}
                 <div className="flex items-center gap-2">
-                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label> {/* Added font-medium for clarity */}
+                  {/* <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label> */}
                   <select
                     id="brand-filter-mobile"
                     value={selectedBrand}
@@ -354,21 +347,8 @@ const CategoryPage: React.FC = () => {
                   </select>
                 </div>
 
-                {/* Mobile Sort By */}
-                <div className="flex items-center gap-2 col-span-2"> {/* This spans both columns */}
-                  <label htmlFor="sort-by-mobile" className="text-sm text-gray-600 font-medium">Sort by:</label> {/* Added font-medium for clarity */}
-                  <select
-                    id="sort-by-mobile"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
-                  >
-                    {/* Removed Popularity for mobile */}
-                    <option value="newest">Newest Arrivals</option>
-                    <option value="price-asc">Price: Low to High</option>
-                    <option value="price-desc">Price: High to Low</option>
-                  </select>
-                </div>
+             
+               
               </div>
             </div>
           </div>
@@ -380,9 +360,9 @@ const CategoryPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredProducts.map((product) => (
-                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full relative group"> {/* Added relative and group for positioning icons */}
+                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full"> {/* Removed relative and group classes */}
                   <CardContent className="p-0 flex-grow flex flex-col">
-                    <Link to={`/product/${product._id}`} className="block"> {/* Make image and title area clickable */}
+                    <Link to={`/product/${product._id}`} className="block"> {/* Make the whole card content area clickable */}
                       <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
                         <img
                           src={product.imageUrl}
@@ -415,35 +395,7 @@ const CategoryPage: React.FC = () => {
                         </div>
                       </div>
                     </Link> {/* End of clickable product info */}
-
-                    {/* Wishlist Icon - Top Right */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute top-2 right-2 bg-white rounded-full p-1 text-gray-600 hover:text-[#D81E05] hover:bg-gray-100 transition-colors z-20"
-                      onClick={(e) => {
-                        e.preventDefault(); // Prevent navigating to product page
-                        handleAddToWishlist(product._id);
-                      }}
-                      aria-label="Add to Wishlist"
-                    >
-                      <Heart className="h-4 w-4 fill-current text-current" />
-                    </Button>
-
-                    {/* Add to Cart Icon - Bottom Right */}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="absolute bottom-2 right-2 bg-white rounded-full p-1 text-gray-600 hover:text-[#D81E05] hover:bg-gray-100 transition-colors z-20"
-                      onClick={(e) => {
-                        e.preventDefault(); // Prevent navigating to product page
-                        handleAddToCart(product._id);
-                      }}
-                      aria-label="Add to Cart"
-                      disabled={product.stock < 1} // Disable if out of stock
-                    >
-                      <ShoppingCart className="h-4 w-4 fill-current text-current" />
-                    </Button>
+                    {/* Removed Wishlist and Add to Cart Buttons */}
                   </CardContent>
                 </Card>
               ))}
