@@ -1,15 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProductById, getProductsByCategory, Product, addToCartApi } from '@/services/product-service'; // Import addToCartApi
+import { getProductById, getProductsByCategory, Product, addToCartApi } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Heart, Share2, Star } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
+import { useAuth } from '@/context/AuthContext';
+// --- Import toast from 'sonner' ---
+import { toast } from 'sonner';
 
-/**
- * Defines the detailed structure for a Product object, extending the base Product interface.
- * This ensures all fields from the Mongoose schema are recognized.
- */
 interface DetailedProduct extends Product {
   description: string;
   brand: string;
@@ -18,16 +16,9 @@ interface DetailedProduct extends Product {
   numReviews: number;
   images: string[];
   specifications: { [key: string]: string };
-  oldPrice?: number; // Ensure oldPrice is optional but present as per schema
+  oldPrice?: number;
 }
 
-/**
- * StarRating component displays a star rating.
- * Re-using from CategoryListPage for consistency.
- * @param {object} props - The component props.
- * @param {number} props.rating - The current rating (1-5).
- * @param {string} [props.size="w-5 h-5"] - Tailwind CSS classes for star size.
- */
 const StarRating = ({ rating, size = "w-5 h-5" }) => {
   return (
     <div className="flex items-center gap-1">
@@ -43,11 +34,6 @@ const StarRating = ({ rating, size = "w-5 h-5" }) => {
   );
 };
 
-/**
- * Helper function to add a product to the wishlist stored in localStorage.
- * @param {Product} product - The product to add.
- * @returns {boolean} True if the product was added, false if it was already present.
- */
 const addProductToWishlist = (product: Product): boolean => {
   try {
     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
@@ -63,25 +49,20 @@ const addProductToWishlist = (product: Product): boolean => {
   }
 };
 
-/**
- * ProductDetailPage component displays detailed information about a single product.
- */
 const ProductDetailPage: React.FC = () => {
-  const { id } = useParams<{ id: string }>(); // Get product ID from URL parameters
+  const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<DetailedProduct | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [mainImage, setMainImage] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  // --- REMOVE message state ---
+  // const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
-  // Use the useAuth hook to get authentication state
   const { isLoggedIn } = useAuth();
-  // Retrieve the token directly from localStorage as useAuth doesn't expose it
   const authToken = localStorage.getItem('userToken');
 
-  // Effect to fetch product details and related products
   useEffect(() => {
     const fetchProductDetails = async () => {
       if (!id) {
@@ -93,25 +74,24 @@ const ProductDetailPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        setMessage(null); // Clear any previous messages
+        // --- No need to clear message here anymore ---
+        // setMessage(null);
 
         const fetchedProduct = await getProductById(id);
         if (fetchedProduct) {
           setProduct(fetchedProduct as DetailedProduct);
-          setMainImage(fetchedProduct.imageUrl); // Set initial main image
-          setQuantity(1); // Reset quantity
+          setMainImage(fetchedProduct.imageUrl);
+          setQuantity(1);
 
-          // Fetch related products
           const productsInSameCategory = await getProductsByCategory(fetchedProduct.category);
           const filteredRelated = productsInSameCategory
-            .filter(p => p._id !== fetchedProduct._id && p.brand !== fetchedProduct.brand) // Use _id for comparison
+            .filter(p => p._id !== fetchedProduct._id && p.brand !== fetchedProduct.brand)
             .sort(() => 0.5 - Math.random())
             .slice(0, 5);
 
-          // If not enough related products, fill from other products in the same category
           if (filteredRelated.length < 5) {
             const allOtherProducts = productsInSameCategory
-              .filter(p => p._id !== fetchedProduct._id && !filteredRelated.some(fp => fp._id === p._id)) // Use _id for comparison
+              .filter(p => p._id !== fetchedProduct._id && !filteredRelated.some(fp => fp._id === p._id))
               .sort(() => 0.5 - Math.random());
             filteredRelated.push(...allOtherProducts.slice(0, 5 - filteredRelated.length));
           }
@@ -124,15 +104,16 @@ const ProductDetailPage: React.FC = () => {
       } catch (err) {
         console.error("Failed to fetch product details:", err);
         setError("Failed to load product details. Please try again later.");
+        // --- Use toast for error messages during fetch as well if desired ---
+        toast.error("Failed to load product details. Please try again later.");
       } finally {
         setLoading(false);
       }
     };
 
     fetchProductDetails();
-  }, [id]); // Re-run effect when product ID changes
+  }, [id]);
 
-  // Display loading state
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4">
@@ -141,7 +122,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Display error state
   if (error) {
     return (
       <div className="container mx-auto px-4 py-12 text-center text-[#222222] bg-[#F8F8F8] min-h-[60vh] flex flex-col justify-center items-center">
@@ -154,7 +134,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Display product not found message if product is null after loading
   if (!product) {
     return (
       <div className="container mx-auto px-4 py-12 text-center text-[#222222] bg-[#F8F8F8] min-h-[60vh] flex flex-col justify-center items-center">
@@ -167,41 +146,44 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Handle adding product to wishlist
   const handleAddToWishlist = () => {
     if (addProductToWishlist(product)) {
-      setMessage({ type: 'success', text: `"${product.name}" added to your wishlist!` });
+      // --- Use toast.success ---
+      toast.success(`"${product.name}" added to your wishlist!`);
     } else {
-      setMessage({ type: 'error', text: `"${product.name}" is already in your wishlist!` });
+      // --- Use toast.error ---
+      toast.error(`"${product.name}" is already in your wishlist!`);
     }
   };
 
-  // Handle adding product to cart
   const handleAddToCart = async () => {
-    // Check isLoggedIn from AuthContext
-    if (!isLoggedIn || !authToken) { // Ensure both isLoggedIn and authToken are valid
-      setMessage({ type: 'error', text: 'Please log in to add items to your cart.' });
+    if (!isLoggedIn || !authToken) {
+      // --- Use toast.error ---
+      toast.error('Please log in to add items to your cart.');
       return;
     }
     if (product.stock <= 0) {
-      setMessage({ type: 'error', text: 'This product is out of stock.' });
+      // --- Use toast.error ---
+      toast.error('This product is out of stock.');
       return;
     }
     if (quantity > product.stock) {
-      setMessage({ type: 'error', text: `Cannot add ${quantity} items. Only ${product.stock} available.` });
+      // --- Use toast.error ---
+      toast.error(`Cannot add ${quantity} items. Only ${product.stock} available.`);
       return;
     }
 
     try {
       await addToCartApi(product._id, quantity, authToken);
-      setMessage({ type: 'success', text: `Added ${quantity} of "${product.name}" to cart!` });
+      // --- Use toast.success ---
+      toast.success(`Added ${quantity} of "${product.name}" to cart!`);
     } catch (cartError: any) {
       console.error("Failed to add to cart:", cartError);
-      setMessage({ type: 'error', text: cartError.response?.data?.message || 'Failed to add to cart. Please try again.' });
+      // --- Use toast.error ---
+      toast.error(cartError.response?.data?.message || 'Failed to add to cart. Please try again.');
     }
   };
 
-  // Handle sharing product
   const handleShare = async () => {
     if (navigator.share) {
       try {
@@ -210,21 +192,21 @@ const ProductDetailPage: React.FC = () => {
           text: `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}...`,
           url: window.location.href,
         });
-        setMessage({ type: 'success', text: 'Product shared successfully!' });
+        // --- Use toast.success ---
+        toast.success('Product shared successfully!');
       } catch (shareError) {
         console.error('Error sharing product:', shareError);
-        setMessage({ type: 'error', text: 'Could not share product. Please try again.' });
+        // --- Use toast.error ---
+        toast.error('Could not share product. Please try again.');
       }
     } else {
-      // Fallback for browsers that don't support Web Share API
       const shareText = `${product.name} - KES ${product.price.toFixed(2)}: ${product.description.substring(0, 100)}... ${window.location.href}`;
       navigator.clipboard.writeText(shareText)
-        .then(() => setMessage({ type: 'success', text: 'Product link and details copied to clipboard!' }))
-        .catch(() => setMessage({ type: 'error', text: 'Could not copy to clipboard.' }));
+        .then(() => toast.success('Product link and details copied to clipboard!')) // --- Use toast.success ---
+        .catch(() => toast.error('Could not copy to clipboard.')); // --- Use toast.error ---
     }
   };
 
-  // Function to truncate product name for breadcrumbs
   const getTruncatedProductName = (name: string) => {
     const words = name.split(' ');
     if (words.length > 2) {
@@ -234,13 +216,13 @@ const ProductDetailPage: React.FC = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20"> {/* Added pb-20 here */}
-      {/* Message Box for Wishlist/Share feedback */}
-      {message && (
+    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20">
+      {/* --- REMOVE the custom message box div --- */}
+      {/* {message && (
         <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 p-3 rounded-md shadow-lg text-white ${message.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}>
           {message.text}
         </div>
-      )}
+      )} */}
 
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex">
@@ -259,7 +241,7 @@ const ProductDetailPage: React.FC = () => {
             <span className="mx-2">/</span>
           </li>
           <li className="flex items-center text-gray-800">
-            {getTruncatedProductName(product.name)} {/* Apply truncation here */}
+            {getTruncatedProductName(product.name)}
           </li>
         </ol>
       </nav>
@@ -281,7 +263,7 @@ const ProductDetailPage: React.FC = () => {
             <div className="flex gap-2 justify-center flex-wrap">
               {product.images.map((img, index) => (
                 <button
-                  key={index} // Using index as key is generally okay for static lists that don't change order or size
+                  key={index}
                   onClick={() => setMainImage(img)}
                   className={`w-16 h-16 rounded-md overflow-hidden border-2 ${mainImage === img ? 'border-[#D81E05]' : 'border-gray-200'} hover:border-[#D81E05] transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-[#D81E05]`}
                 >
@@ -305,14 +287,14 @@ const ProductDetailPage: React.FC = () => {
 
           {product.rating !== undefined && product.numReviews !== undefined && (
             <div className="flex items-center mb-4">
-              <StarRating rating={Math.round(product.rating)} /> {/* Use StarRating component */}
+              <StarRating rating={Math.round(product.rating)} />
               <span className="text-sm text-gray-600 ml-2">({product.numReviews} reviews)</span>
             </div>
           )}
 
           <div className="flex items-baseline gap-2 mb-4">
             <p className="text-3xl font-bold text-[#D81E05]">KES {product.price.toFixed(2)}</p>
-            {product.oldPrice && product.oldPrice > product.price && ( // Only show oldPrice if it's higher than current price
+            {product.oldPrice && product.oldPrice > product.price && (
               <p className="text-lg text-gray-500 line-through">KES {product.oldPrice.toFixed(2)}</p>
             )}
           </div>
@@ -343,7 +325,7 @@ const ProductDetailPage: React.FC = () => {
                 type="number"
                 id="quantity"
                 value={quantity}
-                onChange={(e) => setQuantity(Math.max(1, Math.min(Number(e.target.value), product.stock || 99)))} // Cap quantity at stock
+                onChange={(e) => setQuantity(Math.max(1, Math.min(Number(e.target.value), product.stock || 99)))}
                 className="w-16 text-center border-x border-gray-300 py-1 text-lg"
                 min="1"
                 max={product.stock || 99}
@@ -359,7 +341,7 @@ const ProductDetailPage: React.FC = () => {
 
           <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
             <Button
-              onClick={handleAddToCart} // Add onClick handler for Add to Cart
+              onClick={handleAddToCart}
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
               disabled={product.stock !== undefined && product.stock <= 0}
             >
@@ -422,7 +404,7 @@ const ProductDetailPage: React.FC = () => {
           <h2 className="text-2xl font-bold text-center mb-6 text-[#222222]">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {relatedProducts.map((relatedProduct) => (
-              <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block"> {/* Use _id for related products link and key */}
+              <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block">
                 <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                   <CardContent className="p-0">
                     <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
