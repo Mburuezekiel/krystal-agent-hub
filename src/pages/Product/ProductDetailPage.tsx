@@ -10,7 +10,7 @@ import {
 } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Share2, Star } from 'lucide-react';
+import { Heart, Share2, Star,ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 // --- Import toast from 'sonner' ---
 import { toast } from 'sonner';
@@ -377,6 +377,7 @@ const ProductDetailPage: React.FC = () => {
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
               disabled={product.stock !== undefined && product.stock <= 0}
             >
+              <ShoppingCart className="h-4 w-4 fill-current text-current" />
               {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
             </Button>
             <Button
