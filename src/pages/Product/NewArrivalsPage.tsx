@@ -279,7 +279,7 @@ const NewArrivalsPage: React.FC = () => {
 
         <main className="flex-1">
           <div className="flex justify-between items-center mb-4 p-2 sm:p-0">
-            <span className="text-gray-700 text-sm">{sortedAndFilteredNewArrivals.length} products</span>
+            <span className="text-gray-700 text-sm">Showing {sortedAndFilteredNewArrivals.length} products</span>
             <div className="flex items-center">
               <label htmlFor="sort-by" className="text-gray-700 mr-1 text-sm">Sort:</label>
               <select
@@ -303,11 +303,11 @@ const NewArrivalsPage: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 items-stretch"> {/* Added items-stretch */}
               {sortedAndFilteredNewArrivals.map((product) => (
-                <Link to={`/product/${product._id}`} key={product._id} className="group block">
-                  <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
-                    <CardContent className="p-0">
+                <Link to={`/product/${product._id}`} key={product._id} className="group block flex flex-col"> {/* Added flex flex-col */}
+                  <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white flex flex-col h-full"> {/* Added flex flex-col h-full */}
+                    <CardContent className="p-0 flex-grow-0"> {/* flex-grow-0 to prevent image area from expanding */}
                       <div className="relative w-full h-32 sm:h-40 aspect-square bg-gray-100 overflow-hidden">
                         <img
                           src={product.imageUrl}
@@ -319,14 +319,15 @@ const NewArrivalsPage: React.FC = () => {
                           }}
                         />
                         {product.isNew && (
-                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span> 
+                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span>
                         )}
                       </div>
-                      <div className="p-2 text-center">
+                    </CardContent>
+                    <div className="p-2 text-center flex-grow flex flex-col justify-between min-h-[5rem] sm:min-h-[6rem]"> {/* Added flex-grow, flex-col, justify-between, and min-h */}
                         <h3 className="text-xs sm:text-sm font-medium text-[#222222] mb-0.5 line-clamp-2">
                           {product.name}
                         </h3>
-                        <div className="flex items-center justify-center gap-1">
+                        <div className="flex items-center justify-center gap-1 mt-auto"> {/* Added mt-auto to push to bottom */}
                           {product.oldPrice && (
                             <p className="text-[0.6rem] text-gray-500 line-through">
                               KES {product.oldPrice.toFixed(2)}
@@ -337,7 +338,6 @@ const NewArrivalsPage: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                    </CardContent>
                   </Card>
                 </Link>
               ))}
