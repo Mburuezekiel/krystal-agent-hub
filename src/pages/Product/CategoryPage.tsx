@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star } from 'lucide-react'; // Removed ShoppingCart and Heart imports
+import { Star } from 'lucide-react';
+
 import { getProductsByCategory, Product } from '@/services/product-service';
 import { Card, CardContent } from '@/components/ui/card';
-// Removed Button import as it's no longer used for product card actions
 
 // StarRating component (reused for consistency)
 const StarRating = ({ rating, size = "w-4 h-4" }) => {
@@ -132,8 +132,6 @@ const CategoryPage: React.FC = () => {
     setFilteredProducts(currentProducts);
   }, [allProducts, selectedPriceRange, selectedBrand, selectedRating, sortBy]); // Dependencies for filter/sort logic
 
-  // Removed handleAddToCart and handleAddToWishlist functions as they are no longer used.
-
   // Render loading, error, or no products found states
   if (loading) {
     return (
@@ -158,7 +156,7 @@ const CategoryPage: React.FC = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24">
+    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24"> {/* Added pb-24 for bottom nav bar clearance */}
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex flex-wrap">
           <li className="flex items-center">
@@ -314,7 +312,7 @@ const CategoryPage: React.FC = () => {
               <div className="md:hidden grid grid-cols-2 gap-2 w-full">
                 {/* Mobile Price Filter */}
                 <div className="flex items-center gap-2">
-                  {/* <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label> */}
+                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label>
                   <select
                     id="price-filter-mobile"
                     value={selectedPriceRange}
@@ -331,7 +329,7 @@ const CategoryPage: React.FC = () => {
 
                 {/* Mobile Brand Filter */}
                 <div className="flex items-center gap-2">
-                  {/* <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label> */}
+                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label>
                   <select
                     id="brand-filter-mobile"
                     value={selectedBrand}
@@ -347,8 +345,21 @@ const CategoryPage: React.FC = () => {
                   </select>
                 </div>
 
-             
-               
+                {/* Mobile Sort By */}
+                <div className="flex items-center gap-2 col-span-2"> {/* This spans both columns */}
+                  <label htmlFor="sort-by-mobile" className="text-sm text-gray-600 font-medium">Sort by:</label>
+                  <select
+                    id="sort-by-mobile"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
+                  >
+                    {/* Removed Popularity for mobile */}
+                    <option value="newest">Newest Arrivals</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -358,44 +369,43 @@ const CategoryPage: React.FC = () => {
               No products found matching your criteria. Please adjust your filters!
             </p>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3"> {/* Adjusted gap to 3 */}
               {filteredProducts.map((product) => (
-                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full"> {/* Removed relative and group classes */}
+                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full">
                   <CardContent className="p-0 flex-grow flex flex-col">
-                    <Link to={`/product/${product._id}`} className="block"> {/* Make the whole card content area clickable */}
-                      <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
+                    <Link to={`/product/${product._id}`} className="block">
+                      <div className="relative w-full h-32 sm:h-40 overflow-hidden"> {/* Smaller image dimensions for small screens */}
                         <img
                           src={product.imageUrl}
                           alt={product.name}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/400x400/E0E0E0/666666?text=Image+Error`;
+                            e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`; // Smaller placeholder
                             e.currentTarget.onerror = null;
                           }}
                         />
                         {product.isNew && (
-                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-xs px-2 py-1 rounded-full font-semibold z-10">
+                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white px-2 py-1 rounded-full font-semibold z-10">
                             NEW
                           </span>
                         )}
                       </div>
-                      <div className="p-3 text-center flex-grow flex flex-col justify-between">
-                        <h3 className="text-sm font-medium text-[#222222] mb-1 line-clamp-2">
+                      <div className="p-2 text-center flex-grow flex flex-col justify-between"> {/* Adjusted padding to 2 */}
+                        <h3 className="text-xs sm:text-sm font-medium text-[#222222] mb-0.5 line-clamp-2"> {/* Reduced font size and mb */}
                           {product.name}
                         </h3>
-                        <div className="flex flex-col items-center justify-center gap-1 mt-2">
+                        <div className="flex flex-col items-center justify-center gap-0.5 mt-1"> {/* Adjusted gap and mt */}
                           {product.oldPrice !== undefined && product.oldPrice > 0 && (
-                            <p className="text-xs text-gray-500 line-through">
+                            <p className="text-[0.6rem] text-gray-500 line-through"> {/* Reduced font size */}
                               KES {product.oldPrice.toLocaleString()}
                             </p>
                           )}
-                          <p className="text-base font-bold text-[#D81E05]">
+                          <p className="text-sm font-bold text-[#D81E05]"> {/* Reduced font size */}
                             KES {product.price.toLocaleString()}
                           </p>
                         </div>
                       </div>
-                    </Link> {/* End of clickable product info */}
-                    {/* Removed Wishlist and Add to Cart Buttons */}
+                    </Link>
                   </CardContent>
                 </Card>
               ))}
