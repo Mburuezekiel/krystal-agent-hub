@@ -61,7 +61,6 @@ router.post('/register', async (req, res) => {
   }
 });
 
-// Modified login route to check for admin/agent role
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
@@ -69,7 +68,6 @@ router.post('/login', async (req, res) => {
     const user = await User.findOne({ email });
 
     if (user && (await user.matchPassword(password))) {
-      // Check if the user's role is 'admin' or 'agent'
       if (user.role === 'admin' || user.role === 'agent') {
         res.json({
           _id: user._id,
@@ -83,7 +81,6 @@ router.post('/login', async (req, res) => {
           token: generateToken(user._id),
         });
       } else {
-        // If the user's role is not admin or agent, deny access
         res.status(403).json({ message: 'Access denied: Only admin and agent accounts can log in here.' });
       }
     } else {

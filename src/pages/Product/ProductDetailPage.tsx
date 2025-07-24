@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { getProductById, getProductsByCategory, Product } from '@/services/product-service';
+import { getProductById, getProductsByCategory, Product, addToCartApi } from '@/services/product-service'; // Import addToCartApi
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Share2, Star } from 'lucide-react'; // Import Star icon
+import { Heart, Share2, Star } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext'; // Import useAuth hook
 
 /**
  * Defines the detailed structure for a Product object, extending the base Product interface.
@@ -74,6 +75,11 @@ const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+  // Use the useAuth hook to get authentication state
+  const { isLoggedIn } = useAuth();
+  // Retrieve the token directly from localStorage as useAuth doesn't expose it
+  const authToken = localStorage.getItem('userToken');
 
   // Effect to fetch product details and related products
   useEffect(() => {
@@ -167,6 +173,31 @@ const ProductDetailPage: React.FC = () => {
       setMessage({ type: 'success', text: `"${product.name}" added to your wishlist!` });
     } else {
       setMessage({ type: 'error', text: `"${product.name}" is already in your wishlist!` });
+    }
+  };
+
+  // Handle adding product to cart
+  const handleAddToCart = async () => {
+    // Check isLoggedIn from AuthContext
+    if (!isLoggedIn || !authToken) { // Ensure both isLoggedIn and authToken are valid
+      setMessage({ type: 'error', text: 'Please log in to add items to your cart.' });
+      return;
+    }
+    if (product.stock <= 0) {
+      setMessage({ type: 'error', text: 'This product is out of stock.' });
+      return;
+    }
+    if (quantity > product.stock) {
+      setMessage({ type: 'error', text: `Cannot add ${quantity} items. Only ${product.stock} available.` });
+      return;
+    }
+
+    try {
+      await addToCartApi(product._id, quantity, authToken);
+      setMessage({ type: 'success', text: `Added ${quantity} of "${product.name}" to cart!` });
+    } catch (cartError: any) {
+      console.error("Failed to add to cart:", cartError);
+      setMessage({ type: 'error', text: cartError.response?.data?.message || 'Failed to add to cart. Please try again.' });
     }
   };
 
@@ -326,8 +357,9 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Button
+              onClick={handleAddToCart} // Add onClick handler for Add to Cart
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
               disabled={product.stock !== undefined && product.stock <= 0}
             >

@@ -287,26 +287,23 @@ const uploadProductImage = asyncHandler(async (req, res) => {
 
 const getPersonalizedRecommendations = asyncHandler(async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 8; // Match frontend limit
+    const limit = parseInt(req.query.limit) || 8;
     console.log(`Backend: Attempting to fetch ${limit} active and approved products for recommendations.`);
 
-    // Ensure the query correctly filters for publicly viewable products
     const products = await Product.find({
       isActive: true,
-      reviewStatus: 'approved' // Crucial: Only show approved products
+      reviewStatus: 'approved'
     })
     .limit(limit)
-    .lean(); // Use .lean() for faster, plain JavaScript objects
+    .lean();
 
     console.log(`Backend: Found ${products ? products.length : 0} active and approved products for recommendations.`);
 
-    // If no products are found, return an empty array gracefully
     if (!products || products.length === 0) {
       console.log('Backend: No active and approved products found for recommendations.');
       return res.status(200).json({ products: [], page: 1, pages: 1, totalCount: 0 });
     }
 
-    // Optional: Add a simple shuffle if you want random recommendations
     const shuffledProducts = products.sort(() => 0.5 - Math.random());
 
 

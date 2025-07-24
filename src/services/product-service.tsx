@@ -49,6 +49,7 @@ export const ALL_CATEGORIES = [
 ];
 
 const API_URL = "https://krystal-agent-hub.onrender.com/api/products";
+const CART_API_URL = "https://krystal-agent-hub.onrender.com/api/cart";
 
 const getProductsArrayFromResponse = (responseData: any): Product[] => {
   if (responseData && Array.isArray(responseData.products)) {
@@ -288,6 +289,29 @@ export const uploadProductImageApi = async (
     return response.data;
   } catch (error) {
     console.error(`Error uploading image for product with ID ${id}:`, error);
+    throw error;
+  }
+};
+
+
+ 
+export const addToCartApi = async (
+  productId: string,
+  quantity: number,
+  token: string
+): Promise<any> => {
+  try {
+    const config = {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    };
+    const response = await axios.post(CART_API_URL, { productId, quantity }, config);
+    return response.data;
+  } catch (error) {
+    console.error("Error adding product to cart:", error);
+    // You might want to throw the error to be caught by the component
     throw error;
   }
 };
