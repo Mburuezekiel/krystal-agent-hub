@@ -15,7 +15,7 @@ router.route('/').get(getProducts);
 router.route('/:id').get(getProductById);
 
 router.route('/')
-  .post(protect, agent,admin, createProduct);
+  .post(protect, agent, createProduct);
 
 router.route('/:id')
   .put(protect, agent, updateProduct)
