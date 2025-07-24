@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { getNewArrivals, Product } from '@/services/product-service'; // Assuming Product interface includes category, brand, rating
+import { getNewArrivals, Product } from '@/services/product-service'; // Assuming Product interface includes category, brand, rating, and _id
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Star } from 'lucide-react'; // For review stars
+import { Star, Loader2, AlertCircle } from 'lucide-react'; // Added Loader2 and AlertCircle
 
 // Define price ranges
 const PRICE_RANGES = [
@@ -24,7 +24,9 @@ const REVIEW_RATINGS = [
 ];
 
 const NewArrivalsPage: React.FC = () => {
-  const allNewArrivals: Product[] = getNewArrivals(); // Get all new arrivals
+  const [allNewArrivals, setAllNewArrivals] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   // State for filters
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
@@ -32,6 +34,29 @@ const NewArrivalsPage: React.FC = () => {
   const [selectedBrand, setSelectedBrand] = useState<string>('All Brands');
   const [selectedRating, setSelectedRating] = useState<{ label: string, minRating: number }>(REVIEW_RATINGS[0]);
   const [isFilterSidebarOpen, setIsFilterSidebarOpen] = useState(false); // For mobile responsiveness
+
+  // Handle sorting
+  const [sortBy, setSortBy] = useState<'popularity' | 'priceAsc' | 'priceDesc'>('popularity');
+
+  // --- Effect to fetch new arrivals ---
+  useEffect(() => {
+    const fetchNewArrivalsData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        // Assuming getNewArrivals now fetches ALL new products, not just a limited number
+        const data = await getNewArrivals();
+        setAllNewArrivals(data);
+      } catch (err) {
+        console.error("Failed to fetch new arrivals:", err);
+        setError("Could not load new arrivals. Please try again later.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNewArrivalsData();
+  }, []); // Empty dependency array means this runs once on mount
 
   // --- Derived Filter Data ---
   const categories = useMemo(() => {
@@ -47,6 +72,7 @@ const NewArrivalsPage: React.FC = () => {
   const brands = useMemo(() => {
     const uniqueBrands = new Set<string>();
     allNewArrivals.forEach(product => {
+      // Ensure product.brand is not null or undefined before adding
       if (product.brand) {
         uniqueBrands.add(product.brand);
       }
@@ -78,16 +104,15 @@ const NewArrivalsPage: React.FC = () => {
     // Filter by Rating
     if (selectedRating.label !== 'All Ratings') {
       filteredProducts = filteredProducts.filter(product =>
-        product.rating >= selectedRating.minRating
+        // Ensure product.rating exists and is a number for comparison
+        (product.rating || 0) >= selectedRating.minRating
       );
     }
 
     return filteredProducts;
   }, [allNewArrivals, selectedCategory, selectedPriceRange, selectedBrand, selectedRating]);
 
-  // Handle sorting (you had a sort by popularity in the image, adding a basic one here)
-  const [sortBy, setSortBy] = useState<'popularity' | 'priceAsc' | 'priceDesc'>('popularity');
-
+  // Sorted and Filtered Products Logic
   const sortedAndFilteredNewArrivals = useMemo(() => {
     let products = [...filteredNewArrivals]; // Create a copy to sort
 
@@ -96,11 +121,32 @@ const NewArrivalsPage: React.FC = () => {
     } else if (sortBy === 'priceDesc') {
       products.sort((a, b) => b.price - a.price);
     }
-    // 'popularity' could be based on a 'salesCount' or a default order if not explicitly defined
-
+    // 'popularity' could remain as the default order or based on a 'salesCount' / 'views' if available
     return products;
   }, [filteredNewArrivals, sortBy]);
 
+  // --- Loading State Render ---
+  if (loading) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-100px)] text-[#222222] bg-[#F8F8F8]">
+        <Loader2 className="h-12 w-12 animate-spin text-[#D81E05]" />
+        <p className="mt-4 text-xl text-muted-foreground">Loading new arrivals...</p>
+      </div>
+    );
+  }
+
+  // --- Error State Render ---
+  if (error) {
+    return (
+      <div className="flex flex-col justify-center items-center h-[calc(100vh-100px)] text-[#222222] bg-[#F8F8F8]">
+        <AlertCircle className="h-12 w-12 text-red-500" />
+        <p className="mt-4 text-xl text-red-500">{error}</p>
+        <Button onClick={() => window.location.reload()} className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white">
+          Retry
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen">
@@ -205,7 +251,7 @@ const NewArrivalsPage: React.FC = () => {
 
             {/* Customer Reviews Filter */}
             <div>
-              <h3 className="font-medium text-lg mb-3 text-orange-500">Customer Reviews</h3> {/* Added orange-500 here too */}
+              <h3 className="font-medium text-lg mb-3 text-orange-500">Customer Reviews</h3>
               <ul className="space-y-2">
                 {REVIEW_RATINGS.map((ratingOption) => (
                   <li key={ratingOption.label}>
@@ -265,7 +311,7 @@ const NewArrivalsPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {sortedAndFilteredNewArrivals.map((product) => (
-                <Link to={`/product/${product.id}`} key={product.id} className="group block">
+                <Link to={`/product/${product._id}`} key={product._id} className="group block">
                   <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
                     <CardContent className="p-0">
                       <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">

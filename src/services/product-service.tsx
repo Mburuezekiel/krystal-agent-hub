@@ -49,7 +49,7 @@ export const ALL_CATEGORIES = [
 ];
 
 const API_URL = "https://krystal-agent-hub.onrender.com/api/products";
-const CART_API_URL = "http://localhost:5000/api/cart";
+const CART_API_URL = "https://krystal-agent-hub.onrender.com/api/cart";
 
 const getProductsArrayFromResponse = (responseData: any): Product[] => {
   if (responseData && Array.isArray(responseData.products)) {
@@ -164,6 +164,7 @@ export const getPersonalizedRecommendations = async (
   limit: number = 6
 ): Promise<Product[]> => {
   try {
+    // No 'config' object with headers is passed here, which is correct for a public endpoint.
     const response = await axios.get(
       `${API_URL}/recommendations?userId=${userId || ""}&limit=${limit}`
     );
@@ -310,6 +311,7 @@ export const addToCartApi = async (
     return response.data;
   } catch (error) {
     console.error("Error adding product to cart:", error);
+    // You might want to throw the error to be caught by the component
     throw error;
   }
 };
