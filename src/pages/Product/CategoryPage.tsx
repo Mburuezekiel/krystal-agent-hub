@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star } from 'lucide-react'; // Only Star is needed here
+import { Star } from 'lucide-react';
 import { getProductsByCategory, Product } from '@/services/product-service';
 import { Card, CardContent } from '@/components/ui/card';
 
@@ -21,8 +21,11 @@ const StarRating = ({ rating, size = "w-4 h-4" }) => {
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
   const categoryName = decodeURIComponent(name || '');
-  // Fetch all products for the current category to derive brands and then filter
-  const allProducts: Product[] = getProductsByCategory(categoryName);
+
+  // 1. State to store all products for the category
+  const [allProducts, setAllProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('');
@@ -30,19 +33,44 @@ const CategoryPage: React.FC = () => {
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [sortBy, setSortBy] = useState<string>('popularity');
 
+  // 2. useEffect to fetch products when categoryName changes
+  useEffect(() => {
+    const fetchCategoryProducts = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const products = await getProductsByCategory(categoryName);
+        setAllProducts(products);
+      } catch (err) {
+        console.error(`Error fetching products for category ${categoryName}:`, err);
+        setError("Failed to load products for this category.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (categoryName) { // Only fetch if categoryName is defined
+      fetchCategoryProducts();
+    }
+  }, [categoryName]); // Re-run when categoryName changes
+
   // Dynamically get unique brands from the products in the current category
   const uniqueBrands = useMemo(() => {
     const brands = new Set<string>();
-    allProducts.forEach(product => {
-      if (product.brand) {
-        brands.add(product.brand);
-      }
-    });
-    return Array.from(brands).sort(); // Convert Set to Array and sort alphabetically
+    // Ensure allProducts is an array before using forEach
+    if (Array.isArray(allProducts)) {
+      allProducts.forEach(product => {
+        if (product.brand) {
+          brands.add(product.brand);
+        }
+      });
+    }
+    return Array.from(brands).sort();
   }, [allProducts]); // Recalculate if allProducts changes
 
+  // Effect for filtering and sorting, depends on allProducts (which is now state)
   useEffect(() => {
-    let currentProducts = [...allProducts];
+    let currentProducts = [...allProducts]; // Start with the fetched products
 
     // Apply Price Range Filter
     if (selectedPriceRange) {
@@ -76,38 +104,60 @@ const CategoryPage: React.FC = () => {
     currentProducts.sort((a, b) => {
       switch (sortBy) {
         case 'newest':
-          // Assuming higher ID means newer for mock data; ideally use a timestamp
-          return b.id.localeCompare(a.id); // Compare string IDs
+          // Assuming higher ID means newer for mock data; ideally use a timestamp like createdAt
+          // If you have createdAt, use: return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+          return b._id.localeCompare(a._id); // Compare string IDs
         case 'price-asc':
           return a.price - b.price;
         case 'price-desc':
           return b.price - a.price;
         case 'popularity':
         default:
-          // Simple popularity based on rating and number of reviews
-          const popularityA = (a.rating * (a.numReviews || 1));
-          const popularityB = (b.rating * (b.numReviews || 1));
+          const popularityA = (a.rating || 0) * (a.numReviews || 1); // Use 0 for undefined rating
+          const popularityB = (b.rating || 0) * (b.numReviews || 1);
           return popularityB - popularityA;
       }
     });
 
     setFilteredProducts(currentProducts);
-  }, [allProducts, selectedPriceRange, selectedBrand, selectedRating, sortBy]);
+  }, [allProducts, selectedPriceRange, selectedBrand, selectedRating, sortBy]); // Dependencies for filter/sort logic
 
+  // Render loading, error, or no products found states
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24 text-center">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-8 text-[#222222]">
+          Shop {categoryName}
+        </h1>
+        <p>Loading products for {categoryName}...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24 text-center">
+        <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-8 text-[#222222]">
+          Shop {categoryName}
+        </h1>
+        <p className="text-red-500">Error: {error}</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24"> {/* Added pb-24 for space at bottom */}
+    <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24">
       <nav className="text-sm text-gray-600 mb-6">
-        <ol className="list-none p-0 inline-flex flex-wrap"> {/* Added flex-wrap */}
+        <ol className="list-none p-0 inline-flex flex-wrap">
           <li className="flex items-center">
-            <Link to="/" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Home</Link> {/* Adjusted font size */}
-            <span className="mx-1 sm:mx-2">/</span> {/* Adjusted margin */}
+            <Link to="/" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Home</Link>
+            <span className="mx-1 sm:mx-2">/</span>
           </li>
           <li className="flex items-center">
-            <Link to="/categories" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Categories</Link> {/* Adjusted font size */}
-            <span className="mx-1 sm:mx-2">/</span> {/* Adjusted margin */}
+            <Link to="/categories" className="text-[#D81E05] hover:underline text-xs sm:text-sm">Categories</Link>
+            <span className="mx-1 sm:mx-2">/</span>
           </li>
-          <li className="flex items-center text-gray-800 text-xs sm:text-sm"> {/* Adjusted font size */}
+          <li className="flex items-center text-gray-800 text-xs sm:text-sm">
             {categoryName}
           </li>
         </ol>
@@ -119,7 +169,6 @@ const CategoryPage: React.FC = () => {
 
       <div className="flex flex-col md:flex-row gap-8">
         <aside className="w-full md:w-64 bg-white p-6 rounded-lg shadow-sm flex-shrink-0 hidden md:block">
-          {/* Desktop Filters (visible on md and larger screens) */}
           <h2 className="text-xl font-semibold mb-6 text-[#222222]">Filters</h2>
 
           <div className="mb-6">
@@ -229,8 +278,7 @@ const CategoryPage: React.FC = () => {
               Showing <span className="font-semibold">{filteredProducts.length}</span> products
             </p>
             <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 w-full sm:w-auto">
-              {/* Sort by - visible on medium and larger screens */}
-              <div className="hidden md:flex items-center gap-2"> {/* Hidden on small screens */}
+              <div className="hidden md:flex items-center gap-2">
                 <label htmlFor="sort-by" className="text-sm text-gray-600">Sort by:</label>
                 <select
                   id="sort-by"
@@ -245,8 +293,7 @@ const CategoryPage: React.FC = () => {
                 </select>
               </div>
 
-              {/* Mobile Filters (Price and Brand) - visible on small screens, flex column */}
-              <div className="flex flex-col gap-2 md:hidden w-full"> {/* Flex column on mobile, hidden on desktop */}
+              <div className="flex flex-col gap-2 md:hidden w-full">
                 <div className="flex items-center gap-2 w-full">
                   <label htmlFor="price-filter-mobile" className="text-sm text-gray-600">Price:</label>
                   <select
@@ -279,7 +326,6 @@ const CategoryPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
-                {/* Rating filter removed from mobile view as per request */}
               </div>
             </div>
           </div>
@@ -291,7 +337,7 @@ const CategoryPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredProducts.map((product) => (
-                <Link to={`/product/${product.id}`} key={product.id} className="group block h-full">
+                <Link to={`/product/${product._id}`} key={product._id} className="group block h-full">
                   <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full">
                     <CardContent className="p-0 flex-grow flex flex-col">
                       <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
@@ -315,7 +361,6 @@ const CategoryPage: React.FC = () => {
                           {product.name}
                         </h3>
                         <div className="flex flex-col items-center justify-center gap-1 mt-2">
-                          {/* Only show oldPrice if it's defined and greater than 0 */}
                           {product.oldPrice !== undefined && product.oldPrice > 0 && (
                             <p className="text-xs text-gray-500 line-through">
                               KES {product.oldPrice.toLocaleString()}
