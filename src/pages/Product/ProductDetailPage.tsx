@@ -282,7 +282,7 @@ const ProductDetailPage: React.FC = () => {
         </div>
 
         <div className="md:w-1/2">
-          <h1 className="text-3xl md:text-4xl font-bold mb-3 text-[#222222]">{product.name}</h1>
+          <h1 className="text-2xl md:text-3xl font-bold mb-3 text-[#222222]">{product.name}</h1>
 
           {product.rating !== undefined && product.numReviews !== undefined && (
             <div className="flex items-center mb-4">
