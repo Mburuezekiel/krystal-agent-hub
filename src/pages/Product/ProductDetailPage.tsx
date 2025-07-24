@@ -193,6 +193,15 @@ const ProductDetailPage: React.FC = () => {
     }
   };
 
+  // Function to truncate product name for breadcrumbs
+  const getTruncatedProductName = (name: string) => {
+    const words = name.split(' ');
+    if (words.length > 2) {
+      return words.slice(0, 2).join(' ') + '...';
+    }
+    return name;
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20"> {/* Added pb-20 here */}
       {/* Message Box for Wishlist/Share feedback */}
@@ -219,7 +228,7 @@ const ProductDetailPage: React.FC = () => {
             <span className="mx-2">/</span>
           </li>
           <li className="flex items-center text-gray-800">
-            {product.name}
+            {getTruncatedProductName(product.name)} {/* Apply truncation here */}
           </li>
         </ol>
       </nav>
@@ -317,7 +326,7 @@ const ProductDetailPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex flex-col-2 sm:flex-row gap-4 mb-6">
+          <div className="flex flex-col sm:flex-row gap-4 mb-6">
             <Button
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
               disabled={product.stock !== undefined && product.stock <= 0}
