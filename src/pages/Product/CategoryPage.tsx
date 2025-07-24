@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Star, ShoppingCart, Heart } from 'lucide-react'; // Import ShoppingCart and Heart
 import { getProductsByCategory, Product } from '@/services/product-service';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button'; // Assuming you have a Button component
 
 // StarRating component (reused for consistency)
 const StarRating = ({ rating, size = "w-4 h-4" }) => {
@@ -20,9 +21,17 @@ const StarRating = ({ rating, size = "w-4 h-4" }) => {
 
 const CategoryPage: React.FC = () => {
   const { name } = useParams<{ name: string }>();
-  const categoryName = decodeURIComponent(name || '');
+  // Decode the URL parameter to get the actual category name
+  const categoryName = useMemo(() => {
+    if (!name) return '';
+    // Revert slugification to get the original category name (e.g., "Home-And-Kitchen" back to "Home & Kitchen")
+    let decodedName = decodeURIComponent(name.replace(/-/g, ' '));
+    // Optionally, if you replaced 'and' for '&', convert it back
+    decodedName = decodedName.replace(/\band\b/gi, '&'); // 'and' as a whole word
+    return decodedName;
+  }, [name]);
 
-  // 1. State to store all products for the category
+  // State to store all products for the category
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,14 +40,15 @@ const CategoryPage: React.FC = () => {
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('');
   const [selectedBrand, setSelectedBrand] = useState<string>('');
   const [selectedRating, setSelectedRating] = useState<number>(0);
-  const [sortBy, setSortBy] = useState<string>('popularity');
+  const [sortBy, setSortBy] = useState<string>('popularity'); // Default sort for desktop
 
-  // 2. useEffect to fetch products when categoryName changes
+  // Effect to fetch products when categoryName changes
   useEffect(() => {
     const fetchCategoryProducts = async () => {
       setLoading(true);
       setError(null);
       try {
+        // Pass the original categoryName to the service, as your service likely expects it
         const products = await getProductsByCategory(categoryName);
         setAllProducts(products);
       } catch (err) {
@@ -111,9 +121,9 @@ const CategoryPage: React.FC = () => {
           return a.price - b.price;
         case 'price-desc':
           return b.price - a.price;
-        case 'popularity':
+        case 'popularity': // Popularity option only for desktop
         default:
-          const popularityA = (a.rating || 0) * (a.numReviews || 1); // Use 0 for undefined rating
+          const popularityA = (a.rating || 0) * (a.numReviews || 1);
           const popularityB = (b.rating || 0) * (b.numReviews || 1);
           return popularityB - popularityA;
       }
@@ -121,6 +131,18 @@ const CategoryPage: React.FC = () => {
 
     setFilteredProducts(currentProducts);
   }, [allProducts, selectedPriceRange, selectedBrand, selectedRating, sortBy]); // Dependencies for filter/sort logic
+
+  // Placeholder for adding to cart/wishlist functionality
+  const handleAddToCart = (productId: string) => {
+    console.log(`Adding product ${productId} to cart`);
+    // Implement your actual add to cart logic here (e.g., using context, Redux, API call)
+  };
+
+  const handleAddToWishlist = (productId: string) => {
+    console.log(`Adding product ${productId} to wishlist`);
+    // Implement your actual add to wishlist logic here
+  };
+
 
   // Render loading, error, or no products found states
   if (loading) {
@@ -168,6 +190,7 @@ const CategoryPage: React.FC = () => {
       </h1>
 
       <div className="flex flex-col md:flex-row gap-8">
+        {/* Desktop Filters (Sidebar) */}
         <aside className="w-full md:w-64 bg-white p-6 rounded-lg shadow-sm flex-shrink-0 hidden md:block">
           <h2 className="text-xl font-semibold mb-6 text-[#222222]">Filters</h2>
 
@@ -278,6 +301,7 @@ const CategoryPage: React.FC = () => {
               Showing <span className="font-semibold">{filteredProducts.length}</span> products
             </p>
             <div className="flex flex-wrap justify-center sm:justify-end items-center gap-2 w-full sm:w-auto">
+              {/* Desktop Sort By */}
               <div className="hidden md:flex items-center gap-2">
                 <label htmlFor="sort-by" className="text-sm text-gray-600">Sort by:</label>
                 <select
@@ -286,16 +310,18 @@ const CategoryPage: React.FC = () => {
                   onChange={(e) => setSortBy(e.target.value)}
                   className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors"
                 >
-                  <option value="popularity">Popularity</option>
+                  <option value="popularity">Popularity</option> {/* Popularity is here for desktop */}
                   <option value="newest">Newest Arrivals</option>
                   <option value="price-asc">Price: Low to High</option>
                   <option value="price-desc">Price: High to Low</option>
                 </select>
               </div>
 
-              <div className="flex flex-col gap-2 md:hidden w-full">
-                <div className="flex items-center gap-2 w-full">
-                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600">Price:</label>
+              {/* Mobile Filters and Sort By (Two Columns) */}
+              <div className="md:hidden grid grid-cols-2 gap-2 w-full">
+                {/* Mobile Price Filter */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="price-filter-mobile" className="text-sm text-gray-600 font-medium">Price:</label> {/* Added font-medium for clarity */}
                   <select
                     id="price-filter-mobile"
                     value={selectedPriceRange}
@@ -304,14 +330,15 @@ const CategoryPage: React.FC = () => {
                   >
                     <option value="">All Prices</option>
                     <option value="under-1000">Under KES 1,000</option>
-                    <option value="1000-5000">KES 1,000 - KES 5,000</option>
-                    <option value="5000-10000">KES 5,000 - KES 10,000</option>
+                    <option value="1000-5000">KES 1,000 - 5,000</option>
+                    <option value="5000-10000">KES 5,000 - 10,000</option>
                     <option value="over-10000">Over KES 10,000</option>
                   </select>
                 </div>
 
-                <div className="flex items-center gap-2 w-full">
-                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600">Brand:</label>
+                {/* Mobile Brand Filter */}
+                <div className="flex items-center gap-2">
+                  <label htmlFor="brand-filter-mobile" className="text-sm text-gray-600 font-medium">Brand:</label> {/* Added font-medium for clarity */}
                   <select
                     id="brand-filter-mobile"
                     value={selectedBrand}
@@ -326,6 +353,22 @@ const CategoryPage: React.FC = () => {
                     ))}
                   </select>
                 </div>
+
+                {/* Mobile Sort By */}
+                <div className="flex items-center gap-2 col-span-2"> {/* This spans both columns */}
+                  <label htmlFor="sort-by-mobile" className="text-sm text-gray-600 font-medium">Sort by:</label> {/* Added font-medium for clarity */}
+                  <select
+                    id="sort-by-mobile"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="border border-gray-300 rounded-md px-3 py-1 text-sm focus:ring-[#D81E05] focus:border-[#D81E05] transition-colors flex-grow"
+                  >
+                    {/* Removed Popularity for mobile */}
+                    <option value="newest">Newest Arrivals</option>
+                    <option value="price-asc">Price: Low to High</option>
+                    <option value="price-desc">Price: High to Low</option>
+                  </select>
+                </div>
               </div>
             </div>
           </div>
@@ -337,9 +380,9 @@ const CategoryPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
               {filteredProducts.map((product) => (
-                <Link to={`/product/${product._id}`} key={product._id} className="group block h-full">
-                  <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full">
-                    <CardContent className="p-0 flex-grow flex flex-col">
+                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full relative group"> {/* Added relative and group for positioning icons */}
+                  <CardContent className="p-0 flex-grow flex flex-col">
+                    <Link to={`/product/${product._id}`} className="block"> {/* Make image and title area clickable */}
                       <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
                         <img
                           src={product.imageUrl}
@@ -371,9 +414,38 @@ const CategoryPage: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </Link>
+                    </Link> {/* End of clickable product info */}
+
+                    {/* Wishlist Icon - Top Right */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute top-2 right-2 bg-white rounded-full p-1 text-gray-600 hover:text-[#D81E05] hover:bg-gray-100 transition-colors z-20"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent navigating to product page
+                        handleAddToWishlist(product._id);
+                      }}
+                      aria-label="Add to Wishlist"
+                    >
+                      <Heart className="h-4 w-4 fill-current text-current" />
+                    </Button>
+
+                    {/* Add to Cart Icon - Bottom Right */}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="absolute bottom-2 right-2 bg-white rounded-full p-1 text-gray-600 hover:text-[#D81E05] hover:bg-gray-100 transition-colors z-20"
+                      onClick={(e) => {
+                        e.preventDefault(); // Prevent navigating to product page
+                        handleAddToCart(product._id);
+                      }}
+                      aria-label="Add to Cart"
+                      disabled={product.stock < 1} // Disable if out of stock
+                    >
+                      <ShoppingCart className="h-4 w-4 fill-current text-current" />
+                    </Button>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           )}
