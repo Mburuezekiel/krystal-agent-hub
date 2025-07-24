@@ -27,6 +27,24 @@ const StarRating = ({ rating, size = "w-4 h-4" }) => {
   );
 };
 
+// --- Helper function for category name formatting (slugification) ---
+// This function should be placed outside of any React components
+// (e.g., in a utils file or at the top level of this file).
+const formatCategoryNameForLink = (name: string): string => {
+  if (!name) return '';
+
+  return name
+    .toLowerCase() // Start with all lowercase for consistent processing
+    .replace(/&/g, 'and') // Replace '&' with 'and' for readability in URL
+    .replace(/[^a-z0-9\s-]/g, '') // Remove all non-alphanumeric characters except spaces and hyphens
+    .replace(/\s+/g, ' ') // Replace multiple spaces with a single space
+    .trim() // Trim leading/trailing spaces
+    .split(' ') // Split into words
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1)) // Capitalize first letter of each word
+    .join('-'); // Join words with hyphens to form the slug
+};
+// ------------------------------------------------------------------
+
 /**
  * ProductCard component displays a single product.
  * @param {object} props - The component props.
@@ -183,10 +201,9 @@ const CategoryListPage = () => {
               <h2 className="text-2xl font-semibold text-gray-800 capitalize">
                 {category.name}
               </h2>
+              {/* Apply formatCategoryNameForLink to the category link */}
               <Link
-                to={`/category/${category.name
-                  .toLowerCase()
-                  .replace(/\s+/g, "-")}`} // Generate URL slug from category name
+                to={`/category/${formatCategoryNameForLink(category.name)}`}
                 className="flex items-center text-red-600 hover:text-red-700 font-medium group"
                 title={`View all products in ${category.name}`}
               >
