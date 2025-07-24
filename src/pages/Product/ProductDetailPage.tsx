@@ -6,13 +6,12 @@ import {
   Product,
   addToCartApi,
   addToWishlistApi,
-  getWishlistApi, // Import getWishlistApi
+  getWishlistApi,
 } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Share2, Star,ShoppingCart } from 'lucide-react';
+import { Heart, Share2, Star, ShoppingCart } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-// --- Import toast from 'sonner' ---
 import { toast } from 'sonner';
 
 interface DetailedProduct extends Product {
@@ -41,22 +40,6 @@ const StarRating = ({ rating, size = "w-5 h-5" }) => {
   );
 };
 
-// This local storage helper is no longer needed as we're using the backend API
-// const addProductToWishlist = (product: Product): boolean => {
-//   try {
-//     const wishlist = JSON.parse(localStorage.getItem('wishlist') || '[]');
-//     if (!wishlist.some((item: Product) => item._id === product._id)) {
-//       wishlist.push(product);
-//       localStorage.setItem('wishlist', JSON.stringify(wishlist));
-//       return true;
-//     }
-//     return false;
-//   } catch (error) {
-//     console.error("Failed to add product to wishlist:", error);
-//     return false;
-//   }
-// };
-
 const ProductDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [product, setProduct] = useState<DetailedProduct | null>(null);
@@ -65,12 +48,11 @@ const ProductDetailPage: React.FC = () => {
   const [mainImage, setMainImage] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
-  const [isWishlisted, setIsWishlisted] = useState<boolean>(false); // New state for wishlist status
+  const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
 
   const { isLoggedIn } = useAuth();
   const authToken = localStorage.getItem('userToken');
 
-  // Function to check if the current product is in the wishlist
   const checkWishlistStatus = async (productId: string, token: string) => {
     if (!token) {
       setIsWishlisted(false);
@@ -83,10 +65,9 @@ const ProductDetailPage: React.FC = () => {
       setIsWishlisted(itemInWishlist);
     } catch (err) {
       console.error("Error checking wishlist status:", err);
-      setIsWishlisted(false); // Assume not wishlisted on error
+      setIsWishlisted(false);
     }
   };
-
 
   useEffect(() => {
     const fetchProductDetails = async () => {
@@ -99,8 +80,6 @@ const ProductDetailPage: React.FC = () => {
       try {
         setLoading(true);
         setError(null);
-        // No need to clear message here anymore as we're using toast
-        // setMessage(null);
 
         const fetchedProduct = await getProductById(id);
         if (fetchedProduct) {
@@ -108,25 +87,18 @@ const ProductDetailPage: React.FC = () => {
           setMainImage(fetchedProduct.imageUrl);
           setQuantity(1);
 
-          // Check wishlist status after product is fetched
           if (isLoggedIn && authToken) {
             checkWishlistStatus(fetchedProduct._id, authToken);
           } else {
-            setIsWishlisted(false); // Not logged in, so not wishlisted
+            setIsWishlisted(false);
           }
 
           const productsInSameCategory = await getProductsByCategory(fetchedProduct.category);
-          const filteredRelated = productsInSameCategory
-            .filter(p => p._id !== fetchedProduct._id && p.brand !== fetchedProduct.brand)
-            .sort(() => 0.5 - Math.random())
-            .slice(0, 5);
+          let filteredRelated = productsInSameCategory
+            .filter(p => p._id !== fetchedProduct._id) // Filter out the current product
+            .sort(() => 0.5 - Math.random()) // Shuffle remaining products
+            .slice(0, 5); // Take up to 5
 
-          if (filteredRelated.length < 5) {
-            const allOtherProducts = productsInSameCategory
-              .filter(p => p._id !== fetchedProduct._id && !filteredRelated.some(fp => fp._id === p._id))
-              .sort(() => 0.5 - Math.random());
-            filteredRelated.push(...allOtherProducts.slice(0, 5 - filteredRelated.length));
-          }
           setRelatedProducts(filteredRelated);
 
         } else {
@@ -143,7 +115,7 @@ const ProductDetailPage: React.FC = () => {
     };
 
     fetchProductDetails();
-  }, [id, isLoggedIn, authToken]); // Re-run effect when product ID or auth state changes
+  }, [id, isLoggedIn, authToken]);
 
   if (loading) {
     return (
@@ -177,7 +149,6 @@ const ProductDetailPage: React.FC = () => {
     );
   }
 
-  // Handle adding product to wishlist via backend API
   const handleAddToWishlist = async () => {
     if (!isLoggedIn || !authToken) {
       toast.error('Please log in to add items to your wishlist.');
@@ -185,14 +156,13 @@ const ProductDetailPage: React.FC = () => {
     }
     try {
       await addToWishlistApi(product._id, authToken);
-      setIsWishlisted(true); // Update state to reflect it's wishlisted
+      setIsWishlisted(true);
       toast.success(`"${product.name}" added to your wishlist!`);
     } catch (wishlistError: any) {
       console.error("Failed to add to wishlist:", wishlistError);
-      // Check for specific error message if product is already in wishlist (e.g., 409 Conflict)
       if (wishlistError.response?.status === 409) {
         toast.info(`"${product.name}" is already in your wishlist!`);
-        setIsWishlisted(true); // Ensure state is true if backend confirms it's already there
+        setIsWishlisted(true);
       } else {
         toast.error(wishlistError.response?.data?.message || 'Failed to add to wishlist. Please try again.');
       }
@@ -253,8 +223,6 @@ const ProductDetailPage: React.FC = () => {
 
   return (
     <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen font-inter pb-20">
-      {/* The custom message box div is removed as 'sonner' toast handles messages */}
-
       <nav className="text-sm text-gray-600 mb-6">
         <ol className="list-none p-0 inline-flex">
           <li className="flex items-center">
@@ -325,7 +293,6 @@ const ProductDetailPage: React.FC = () => {
 
           <div className="flex items-baseline gap-2 mb-4">
             <p className="text-3xl font-bold text">KES {product.price.toFixed(2)}</p>
-            {/* D81E05 */}
             {product.oldPrice && product.oldPrice > product.price && (
               <p className="text-lg text-gray-500 line-through">KES {product.oldPrice.toFixed(2)}</p>
             )}
@@ -385,7 +352,7 @@ const ProductDetailPage: React.FC = () => {
               className="bg-gray-200 hover:bg-gray-300 text-[#D81E05] rounded-full px-4 py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
               aria-label="Add to Wishlist"
             >
-              <Heart className={isWishlisted ? "fill-red-500 text-red-500" : ""} /> {/* Dynamic fill */}
+              <Heart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
               <span className="hidden sm:inline">Wishlist</span>
             </Button>
             <Button
@@ -435,11 +402,11 @@ const ProductDetailPage: React.FC = () => {
       {relatedProducts.length > 0 && (
         <div className="mt-8">
           <h2 className="text-2xl font-bold text-center mb-6 text-[#222222]">You Might Also Like</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 **items-stretch**">
             {relatedProducts.map((relatedProduct) => (
-              <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block">
-                <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white">
-                  <CardContent className="p-0">
+              <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block **flex flex-col h-full**">
+                <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white **flex flex-col h-full**">
+                  <CardContent className="p-0 **flex-grow-0**">
                     <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
                       <img
                         src={relatedProduct.imageUrl}
@@ -451,24 +418,24 @@ const ProductDetailPage: React.FC = () => {
                         }}
                       />
                       {relatedProduct.isNew && (
-                        <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-xs px-2 py-1 rounded-full font-semibold">NEW</span>
+                        <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span> 
                       )}
                     </div>
-                    <div className="p-3 text-center">
-                      <h3 className="text-sm font-medium text-[#222222] mb-1 line-clamp-2">
-                        {relatedProduct.name}
-                      </h3>
-                      <div className="flex items-center justify-center gap-2">
-                        {relatedProduct.oldPrice && relatedProduct.oldPrice > relatedProduct.price && (
-                          <p className="text-xs text-gray-500 line-through">
-                            KES {relatedProduct.oldPrice.toFixed(2)}</p>
-                        )}
-                        <p className="text-base font-semibold text-[#D81E05]">
-                          KES {relatedProduct.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
                   </CardContent>
+                  <div className="p-3 text-center **flex-grow flex flex-col justify-between min-h-[5rem] sm:min-h-[6rem]**">
+                    <h3 className="text-sm font-medium text-[#222222] mb-1 line-clamp-2">
+                      {relatedProduct.name}
+                    </h3>
+                    <div className="flex items-center justify-center gap-2 **mt-auto**">
+                      {relatedProduct.oldPrice && relatedProduct.oldPrice > relatedProduct.price && (
+                        <p className="text-xs text-gray-500 line-through">
+                          KES {relatedProduct.oldPrice.toFixed(2)}</p>
+                      )}
+                      <p className="text-base font-semibold text-[#D81E05]">
+                        KES {relatedProduct.price.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
                 </Card>
               </Link>
             ))}
