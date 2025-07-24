@@ -103,8 +103,8 @@ const Header: React.FC = () => {
       </div>
 
       {/* Mobile Top Bar (Search Only) - Visible on small screens, hidden on large */}
-      <div className="lg:hidden bg-white shadow-sm sticky top-0 z-40 p-3">
-  <div className="container mx-auto flex items-center">
+<div className="lg:hidden bg-white shadow-sm sticky top-0 z-40 p-3">
+  <div className="flex items-center"> {/* Removed container mx-auto */}
     <div className="flex-grow relative">
       <Input
         type="search"
