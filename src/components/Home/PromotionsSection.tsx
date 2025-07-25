@@ -12,7 +12,6 @@ const PromotionsSection: React.FC = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [overallTimeLeft, setOverallTimeLeft] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchPromotions = async () => {
@@ -40,49 +39,50 @@ const PromotionsSection: React.FC = () => {
     fetchPromotions();
   }, []);
 
-  useEffect(() => {
-    const promotionWithEndTime = promotions.find(p => p.endTime);
-    if (!promotionWithEndTime || !promotionWithEndTime.endTime) {
-      setOverallTimeLeft(null);
-      return;
-    }
-
-    const calculateOverallTimeLeft = () => {
-      const total = Date.parse(promotionWithEndTime.endTime!) - Date.now();
-      if (total < 0) {
-        setOverallTimeLeft("Expired!");
-        return true;
-      } else {
-        const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
-        const minutes = Math.floor((total / 1000 / 60) % 60);
-        const seconds = Math.floor((total / 1000) % 60);
-        setOverallTimeLeft(
-          `${hours.toString().padStart(2, "0")}:${minutes
-            .toString()
-            .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
-        );
-        return false;
-      }
-    };
-
-    let expired = calculateOverallTimeLeft();
-
-    let interval: NodeJS.Timeout | null = null;
-    if (!expired) {
-      interval = setInterval(() => {
-        expired = calculateOverallTimeLeft();
-        if (expired && interval) {
-          clearInterval(interval);
-        }
-      }, 1000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [promotions]);
-
   const PromotionCard: React.FC<{ promotion: Promotion }> = ({ promotion }) => {
+    const [timeLeft, setTimeLeft] = useState("");
+
+    useEffect(() => {
+      if (!promotion.endTime) {
+        setTimeLeft("");
+        return;
+      }
+
+      const calculateTimeLeft = () => {
+        const total = Date.parse(promotion.endTime!) - Date.now();
+        if (total < 0) {
+          setTimeLeft("Expired!");
+          return true;
+        } else {
+          const hours = Math.floor((total / (1000 * 60 * 60)) % 24);
+          const minutes = Math.floor((total / 1000 / 60) % 60);
+          const seconds = Math.floor((total / 1000) % 60);
+          setTimeLeft(
+            `${hours.toString().padStart(2, "0")}:${minutes
+              .toString()
+              .padStart(2, "0")}:${seconds.toString().padStart(2, "0")}`
+          );
+          return false;
+        }
+      };
+
+      let expired = calculateTimeLeft();
+
+      let interval: NodeJS.Timeout | null = null;
+      if (!expired) {
+        interval = setInterval(() => {
+          expired = calculateTimeLeft();
+          if (expired && interval) {
+            clearInterval(interval);
+          }
+        }, 1000);
+      }
+
+      return () => {
+        if (interval) clearInterval(interval);
+      };
+    }, [promotion.endTime]);
+
     return (
       <div className="relative rounded-lg overflow-hidden shadow-md group bg-white flex flex-col h-full">
         <div className="relative w-full h-48 md:h-64 overflow-hidden flex-shrink-0">
@@ -95,6 +95,12 @@ const PromotionsSection: React.FC = () => {
               e.currentTarget.onerror = null;
             }}
           />
+          {/* Moved this section inside PromotionCard */}
+          {promotion.endTime && timeLeft && timeLeft !== "Expired!" && (
+            <div className="bg-[#D81E05] text-white text-[0.7rem] sm:text-xs font-bold px-2.5 py-1.5 rounded-full absolute top-3 left-3 flex items-center gap-1">
+              🔥 FLASH DEAL: <span className="font-mono">{timeLeft}</span>
+            </div>
+          )}
         </div>
         
         <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent flex flex-col justify-end p-4">
@@ -126,11 +132,6 @@ const PromotionsSection: React.FC = () => {
       <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
         🔥 Hot Deals🔥
       </h2>
-      {overallTimeLeft && overallTimeLeft !== "Expired!" && (
-        <div className="bg-[#D81E05] text-white text-[0.8rem] sm:text-base font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-2 mb-8 mx-auto max-w-fit">
-           FLASH DEAL ENDS IN: <span className="font-mono text-lg sm:text-xl">{overallTimeLeft}</span>
-        </div>
-      )}
       <div className="max-w-7xl mx-auto">
         {loading ? (
           <div className="flex flex-col justify-center items-center min-h-[200px] bg-white rounded-lg shadow-md p-8">
