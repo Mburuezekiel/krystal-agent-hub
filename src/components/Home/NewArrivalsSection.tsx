@@ -42,7 +42,7 @@ const NewArrivalsSection: React.FC = () => {
   if (error) {
     return (
       <section className="py-8 px-4 md:px-6 lg:px-8 bg-[#F8F8F8] text-[#222222]">
-        <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">New In</h2>
+        <h2 className=" text-3xl md:text-4xl font-bold text-center mb-8">New In</h2>
         <div className="flex flex-col justify-center items-center min-h-[200px] bg-white rounded-lg shadow-md p-8">
           <AlertCircle className="h-10 w-10 text-red-500" />
           <p className="mt-4 text-lg text-red-500">{error}</p>
@@ -55,8 +55,8 @@ const NewArrivalsSection: React.FC = () => {
   }
 
   return (
-    <section className="py-8 px-4 md:px-6 lg:px-8 bg-[#F8F8F8] text-[#222222]">
-      <h2 className="text-3xl md:text-4xl font-bold text-center mb-8">
+    <section className="py-8 px-4 md:px-6 lg:px-8 bg-[#F8F8F8] text-white">
+      <h2 className="text-3xl md:text-4xl  rounded   bg-[#D81E05]   font-bold text-center mb-8">
         New In
       </h2>
       <div className='max-w-7xl mx-auto'>
