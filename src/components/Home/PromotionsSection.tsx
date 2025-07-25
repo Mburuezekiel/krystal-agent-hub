@@ -128,7 +128,7 @@ const PromotionsSection: React.FC = () => {
       </h2>
       {overallTimeLeft && overallTimeLeft !== "Expired!" && (
         <div className="bg-[#D81E05] text-white text-[0.8rem] sm:text-base font-bold px-4 py-2 rounded-lg flex items-center justify-center gap-2 mb-8 mx-auto max-w-fit">
-          🔥 FLASH DEAL ENDS IN: <span className="font-mono text-lg sm:text-xl">{overallTimeLeft}</span>
+           FLASH DEAL ENDS IN: <span className="font-mono text-lg sm:text-xl">{overallTimeLeft}</span>
         </div>
       )}
       <div className="max-w-7xl mx-auto">
