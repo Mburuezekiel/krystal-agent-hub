@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Loader2 } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast'; // Import toast and Toaster
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -19,6 +21,7 @@ type LoginFormValues = z.infer<typeof loginSchema>;
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -30,6 +33,7 @@ const LoginPage: React.FC = () => {
   });
 
   const onSubmit = async (data: LoginFormValues) => {
+    setLoading(true);
     try {
       const response = await fetch(
         "https://krystal-agent-hub.onrender.com/api/auth/login",
@@ -46,16 +50,30 @@ const LoginPage: React.FC = () => {
 
       if (response.ok) {
         login(result.token, result.userName);
-        alert("Login successful! Welcome, " + result.userName);
+        // Display success toast
+        toast.success(`Login successful! Welcome, ${result.userName}`, {
+          position: 'bottom-right', // Position the toast
+          duration: 3000, // Duration in milliseconds
+        });
         navigate("/");
       } else {
-        alert("Login failed: " + (result.message || "Invalid credentials"));
+        // Display error toast
+        toast.error(`Login failed: ${result.message || "Invalid credentials"}`, {
+          position: 'bottom-right',
+          duration: 3000,
+        });
       }
     } catch (error) {
       console.error("Network error during login:", error);
-      alert("Network error. Please try again.");
+      // Display network error toast
+      toast.error("Network error. Please try again.", {
+        position: 'bottom-right',
+        duration: 3000,
+      });
+    } finally {
+      setLoading(false);
+      reset();
     }
-    reset();
   };
 
   return (
@@ -105,8 +123,16 @@ const LoginPage: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md py-2 font-semibold"
+              disabled={loading}
             >
-              Login
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Logging in...
+                </span>
+              ) : (
+                "Login"
+              )}
             </Button>
           </form>
           <p className="text-center text-sm mt-6 text-gray-600">
@@ -117,6 +143,7 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <Toaster /> 
     </>
   );
 };
