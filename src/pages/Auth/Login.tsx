@@ -7,7 +7,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Loader2 } from "lucide-react";
-import toast, { Toaster } from 'react-hot-toast'; // Import toast and Toaster
+import toast, { Toaster } from 'react-hot-toast';
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -50,25 +50,34 @@ const LoginPage: React.FC = () => {
 
       if (response.ok) {
         login(result.token, result.userName);
-        // Display success toast
         toast.success(`Login successful! Welcome, ${result.userName}`, {
-          position: 'bottom-right', // Position the toast
-          duration: 3000, // Duration in milliseconds
+          position: 'bottom-right',
+          duration: 5000,
+          ariaProps: {
+            role: 'status',
+            'aria-live': 'polite',
+          },
         });
         navigate("/");
       } else {
-        // Display error toast
         toast.error(`Login failed: ${result.message || "Invalid credentials"}`, {
           position: 'bottom-right',
-          duration: 3000,
+          duration: 5000,
+          ariaProps: {
+            role: 'alert',
+            'aria-live': 'assertive',
+          },
         });
       }
     } catch (error) {
       console.error("Network error during login:", error);
-      // Display network error toast
       toast.error("Network error. Please try again.", {
         position: 'bottom-right',
-        duration: 3000,
+        duration: 5000,
+        ariaProps: {
+          role: 'alert',
+          'aria-live': 'assertive',
+        },
       });
     } finally {
       setLoading(false);
@@ -143,7 +152,42 @@ const LoginPage: React.FC = () => {
           </p>
         </div>
       </div>
-      <Toaster /> 
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          success: {
+            duration: 5000,
+            style: {
+              background: '#4CAF50',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#4CAF50',
+            },
+          },
+          error: {
+            duration: 5000,
+            style: {
+              background: '#D81E05',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#D81E05',
+            },
+          },
+          style: {
+            borderRadius: '8px',
+            padding: '16px',
+            fontSize: '16px',
+          },
+        }}
+        containerStyle={{
+          bottom: 20,
+          right: 20,
+        }}
+      />
     </>
   );
 };

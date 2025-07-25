@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,6 +6,8 @@ import { Label } from "@/components/ui/label";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { Loader2 } from "lucide-react";
+import toast, { Toaster } from 'react-hot-toast';
 
 import { useAuth } from "@/context/AuthContext";
 
@@ -45,6 +47,7 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
+  const [loading, setLoading] = useState(false);
 
   const {
     register,
@@ -56,6 +59,7 @@ const RegisterPage: React.FC = () => {
   });
 
   const onSubmit = async (data: RegisterFormValues) => {
+    setLoading(true);
     try {
       const response = await fetch(
         "https://krystal-agent-hub.onrender.com/api/auth/register",
@@ -72,19 +76,42 @@ const RegisterPage: React.FC = () => {
 
       if (response.ok) {
         login(result.token, result.userName);
-        alert("Registration successful! Welcome, " + result.userName);
+        toast.success(`Registration successful! Welcome, ${result.userName}`, {
+          position: 'bottom-right',
+          duration: 5000,
+          ariaProps: {
+            role: 'status',
+            'aria-live': 'polite',
+          },
+        });
         navigate("/");
       } else {
-        alert(
-          "Registration failed: " +
-            (result.message || "Please check your input.")
+        toast.error(
+          `Registration failed: ${result.message || "Please check your input."}`,
+          {
+            position: 'bottom-right',
+            duration: 5000,
+            ariaProps: {
+              role: 'alert',
+              'aria-live': 'assertive',
+            },
+          }
         );
       }
     } catch (error) {
       console.error("Network error during registration:", error);
-      alert("Network error. Please try again.");
+      toast.error("Network error. Please try again.", {
+        position: 'bottom-right',
+        duration: 5000,
+        ariaProps: {
+          role: 'alert',
+          'aria-live': 'assertive',
+        },
+      });
+    } finally {
+      setLoading(false);
+      reset();
     }
-    reset();
   };
 
   return (
@@ -213,8 +240,16 @@ const RegisterPage: React.FC = () => {
             <Button
               type="submit"
               className="w-full bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md py-2 font-semibold"
+              disabled={loading}
             >
-              Register
+              {loading ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Registering...
+                </span>
+              ) : (
+                "Register"
+              )}
             </Button>
           </form>
           <p className="text-center text-sm mt-6 text-gray-600">
@@ -225,6 +260,42 @@ const RegisterPage: React.FC = () => {
           </p>
         </div>
       </div>
+      <Toaster
+        position="bottom-right"
+        toastOptions={{
+          success: {
+            duration: 5000,
+            style: {
+              background: '#4CAF50',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#4CAF50',
+            },
+          },
+          error: {
+            duration: 5000,
+            style: {
+              background: '#D81E05',
+              color: '#fff',
+            },
+            iconTheme: {
+              primary: '#fff',
+              secondary: '#D81E05',
+            },
+          },
+          style: {
+            borderRadius: '8px',
+            padding: '16px',
+            fontSize: '16px',
+          },
+        }}
+        containerStyle={{
+          bottom: 20,
+          right: 20,
+        }}
+      />
     </>
   );
 };
