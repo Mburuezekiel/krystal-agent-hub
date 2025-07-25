@@ -427,7 +427,7 @@ const ProductDetailPage: React.FC = () => {
 
       {relatedProducts.length > 0 && (
         <div className="mt-8">
-          <h2 className="text-2xl font-bold text-center mb-6 text-[#222222]">You Might Also Like</h2>
+          <h2 className="text-2xl font-bold text-center mb-6  bg-[#D81E05] text-white rounded ">You Might Also Like</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 **items-stretch**">
             {relatedProducts.map((relatedProduct) => (
               <Link to={`/product/${relatedProduct._id}`} key={relatedProduct._id} className="group block **flex flex-col h-full**">
