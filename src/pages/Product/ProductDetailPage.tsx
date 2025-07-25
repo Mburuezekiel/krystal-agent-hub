@@ -10,7 +10,7 @@ import {
 } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, Share2, Star, ShoppingCart } from 'lucide-react';
+import { Heart, Share2, Star, ShoppingCart, Loader2 } from 'lucide-react'; // Import Loader2
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
@@ -49,6 +49,8 @@ const ProductDetailPage: React.FC = () => {
   const [quantity, setQuantity] = useState<number>(1);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
   const [isWishlisted, setIsWishlisted] = useState<boolean>(false);
+  const [addingToCart, setAddingToCart] = useState<boolean>(false); // New loading state for cart
+  const [addingToWishlist, setAddingToWishlist] = useState<boolean>(false); // New loading state for wishlist
 
   const { isLoggedIn } = useAuth();
   const authToken = localStorage.getItem('userToken');
@@ -154,6 +156,8 @@ const ProductDetailPage: React.FC = () => {
       toast.error('Please log in to add items to your wishlist.');
       return;
     }
+
+    setAddingToWishlist(true); // Set loading state
     try {
       await addToWishlistApi(product._id, authToken);
       setIsWishlisted(true);
@@ -162,10 +166,12 @@ const ProductDetailPage: React.FC = () => {
       console.error("Failed to add to wishlist:", wishlistError);
       if (wishlistError.response?.status === 409) {
         toast.info(`"${product.name}" is already in your wishlist!`);
-        setIsWishlisted(true);
+        setIsWishlisted(true); // Ensure state is correct if already wishlisted
       } else {
         toast.error(wishlistError.response?.data?.message || 'Failed to add to wishlist. Please try again.');
       }
+    } finally {
+      setAddingToWishlist(false); // Reset loading state
     }
   };
 
@@ -183,12 +189,15 @@ const ProductDetailPage: React.FC = () => {
       return;
     }
 
+    setAddingToCart(true); // Set loading state
     try {
       await addToCartApi(product._id, quantity, authToken);
       toast.success(`Added ${quantity} of "${product.name}" to cart!`);
     } catch (cartError: any) {
       console.error("Failed to add to cart:", cartError);
       toast.error(cartError.response?.data?.message || 'Failed to add to cart. Please try again.');
+    } finally {
+      setAddingToCart(false); // Reset loading state
     }
   };
 
@@ -342,18 +351,35 @@ const ProductDetailPage: React.FC = () => {
             <Button
               onClick={handleAddToCart}
               className="bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-full px-8 py-3 text-lg font-semibold flex-grow transition-colors duration-200"
-              disabled={product.stock !== undefined && product.stock <= 0}
+              disabled={product.stock !== undefined && product.stock <= 0 || addingToCart} // Disable if out of stock or adding
             >
-              <ShoppingCart className="h-4 w-4 fill-current text-current" />
-              {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+              {addingToCart ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Adding...
+                </span>
+              ) : (
+                <>
+                  <ShoppingCart className="h-4 w-4 fill-current text-current" />
+                  {product.stock !== undefined && product.stock <= 0 ? 'Out of Stock' : 'Add to Cart'}
+                </>
+              )}
             </Button>
             <Button
               onClick={handleAddToWishlist}
               className="bg-gray-200 hover:bg-gray-300 text-[#D81E05] rounded-full px-4 py-3 text-lg font-semibold flex items-center justify-center gap-2 transition-colors duration-200"
               aria-label="Add to Wishlist"
+              disabled={addingToWishlist} // Disable when adding to wishlist
             >
-              <Heart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
-              <span className="hidden sm:inline">Wishlist</span>
+              {addingToWishlist ? (
+                <span className="flex items-center justify-center">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </span>
+              ) : (
+                <Heart className={isWishlisted ? "fill-red-500 text-red-500" : ""} />
+              )}
+              <span className="hidden sm:inline">
+                {addingToWishlist ? 'Adding...' : 'Wishlist'}
+              </span>
             </Button>
             <Button
               onClick={handleShare}
@@ -418,7 +444,7 @@ const ProductDetailPage: React.FC = () => {
                         }}
                       />
                       {relatedProduct.isNew && (
-                        <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span> 
+                        <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span>
                       )}
                     </div>
                   </CardContent>
