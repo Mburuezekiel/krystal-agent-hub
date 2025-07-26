@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { ProductCard } from "@/components/common/ProductCard";
 import { getPromotionalProducts, Product } from "@/services/product-service";
-import { Loader2, AlertCircle } from "lucide-react";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { Loader2, AlertCircle, WifiOff } from "lucide-react";
 
 interface Promotion extends Product {
   endTime?: string;
@@ -12,32 +14,44 @@ const PromotionsSection: React.FC = () => {
   const [promotions, setPromotions] = useState<Promotion[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { isOnline, wasOffline } = useNetworkStatus();
+
+  const fetchPromotions = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const data = await getPromotionalProducts(6);
+
+      const mappedPromotions: Promotion[] = data.map((p, index) => ({
+        ...p,
+        endTime:
+          index === 0
+            ? new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString()
+            : undefined,
+      }));
+      setPromotions(mappedPromotions);
+    } catch (err: any) {
+      console.error("Failed to fetch promotional products:", err);
+      if (!isOnline) {
+        setError('You are offline. Please check your internet connection.');
+      } else {
+        setError(err.message || "Could not load hot deals. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchPromotions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const data = await getPromotionalProducts(2);
-
-        const mappedPromotions: Promotion[] = data.map((p, index) => ({
-          ...p,
-          endTime:
-            index === 0
-              ? new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString()
-              : undefined,
-        }));
-        setPromotions(mappedPromotions);
-      } catch (err) {
-        console.error("Failed to fetch promotional products:", err);
-        setError("Could not load hot deals. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchPromotions();
   }, []);
+
+  // Auto-reload when coming back online
+  useEffect(() => {
+    if (isOnline && wasOffline && error) {
+      fetchPromotions();
+    }
+  }, [isOnline, wasOffline, error]);
 
   const PromotionCard: React.FC<{ promotion: Promotion }> = ({ promotion }) => {
     const [timeLeft, setTimeLeft] = useState("");
@@ -142,14 +156,22 @@ const PromotionsSection: React.FC = () => {
           </div>
         ) : error ? (
           <div className="flex flex-col justify-center items-center min-h-[200px] bg-white rounded-lg shadow-md p-8">
-            <AlertCircle className="h-10 w-10 text-red-500" />
-            <p className="mt-4 text-lg text-red-500">{error}</p>
-            <Button
-              onClick={() => window.location.reload()}
-              className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white"
-            >
-              Retry
-            </Button>
+            {!isOnline ? <WifiOff className="h-10 w-10 text-gray-500" /> : <AlertCircle className="h-10 w-10 text-red-500" />}
+            <p className="mt-4 text-lg text-gray-700">{error}</p>
+            {isOnline && (
+              <Button
+                onClick={fetchPromotions}
+                className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white"
+              >
+                Retry
+              </Button>
+            )}
+            {!isOnline && (
+              <div className="flex items-center text-gray-500 text-sm mt-4">
+                <WifiOff className="h-4 w-4 mr-2" />
+                Will automatically retry when connection is restored
+              </div>
+            )}
           </div>
         ) : promotions.length === 0 ? (
           <div className="text-center p-8 bg-white rounded-lg shadow-md">

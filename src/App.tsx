@@ -5,6 +5,10 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import { WishlistProvider } from "./context/WishlistContext";
+import { useRefreshToken } from "./hooks/useRefreshToken";
 
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -49,45 +53,58 @@ const ScrollToTopOnNavigate = () => {
   return null;
 };
 
+const AppContent = () => {
+  useRefreshToken(); // Initialize refresh token logic
+
+  return (
+    <>
+      <ScrollToTopOnNavigate />
+      <Header />
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/account" element={<ProfilePage />} />
+
+        <Route path="/product/:id" element={<ProductDetailPage />} />
+        <Route path="/categories" element={<CategoryListPage />} />
+        <Route path="/category/:name" element={<CategoryPage />} />
+        <Route path="/new-in" element={<NewArrivalsPage />} />
+        <Route path="/sale" element={<SalePage />} />
+        <Route path="/wishlist" element={<WishlistPage />} />
+        <Route path="/cart" element={<CartPage />} />
+        <Route path="/cart/checkout" element={<CheckoutPage />} />
+        <Route path="/contact" element={<ContactPage />} />
+        <Route path="/faq" element={<FAQPage />} />
+        <Route path="/shipping" element={<ShippingPage />} />
+        <Route path="/returns" element={<ReturnsPage />} />
+        <Route path="/size-guide" element={<SizeGuidePage />} />
+        <Route path="/gift-cards" element={<GiftCardsPage />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
+        <Route path="/terms-of-service" element={<TermsOfServicePage />} />
+
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </>
+  );
+};
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <Toaster />
       <Sonner />
-      <BrowserRouter>
-        <ScrollToTopOnNavigate />
-        <Header />
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/forgot-password" element={<ForgotPassword />} />
-          <Route path="/account" element={<ProfilePage />} />
-
-  
-
-          <Route path="/product/:id" element={<ProductDetailPage />} />
-          <Route path="/categories" element={<CategoryListPage />} />
-          <Route path="/category/:name" element={<CategoryPage />} />
-          <Route path="/new-in" element={<NewArrivalsPage />} />
-          <Route path="/sale" element={<SalePage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
-          <Route path="/cart" element={<CartPage />} />
-          <Route path="/cart/checkout" element={<CheckoutPage />} />
-          <Route path="/contact" element={<ContactPage />} />
-          <Route path="/faq" element={<FAQPage />} />
-          <Route path="/shipping" element={<ShippingPage />} />
-          <Route path="/returns" element={<ReturnsPage />} />
-          <Route path="/size-guide" element={<SizeGuidePage />} />
-          <Route path="/gift-cards" element={<GiftCardsPage />} />
-          <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
-          <Route path="/terms-of-service" element={<TermsOfServicePage />} />
-
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-        {/* <Footer/> */}
-      </BrowserRouter>
+      <AuthProvider>
+        <CartProvider>
+          <WishlistProvider>
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
