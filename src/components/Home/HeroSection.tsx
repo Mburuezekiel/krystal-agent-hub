@@ -111,7 +111,7 @@ const HeroSection: React.FC = () => {
         opts={{
           loop: true, // Ensures the carousel loops continuously
         }}
-        plugins={[plugin.current]} // Apply the autoplay plugin
+        plugins={[plugin.current] as any} // Apply the autoplay plugin
         setApi={setApi} // Pass setApi to Carousel to get the API instance
         className="w-full"
       >

@@ -35,7 +35,7 @@ const shippingSchema = z.object({
 // Zod schema for payment method validation
 const paymentSchema = z.object({
   paymentMethod: z.enum(["mpesa", "card", "cash"], {
-    required_error: "Payment method is required",
+    message: "Payment method is required",
   }),
 });
 
@@ -52,16 +52,25 @@ const CheckoutPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   // React Hook Form for Shipping
+  const shippingForm = useForm<ShippingFormValues>({
+    resolver: zodResolver(shippingSchema),
+  });
+
   const {
     register: registerShipping,
     handleSubmit: handleShippingSubmit,
     formState: { errors: shippingErrors },
     getValues: getShippingValues, // To get shipping data for combined submission
-  } = useForm<ShippingFormValues>({
-    resolver: zodResolver(shippingSchema),
-  });
+  } = shippingForm;
 
   // React Hook Form for Payment
+  const paymentForm = useForm<PaymentFormValues>({
+    resolver: zodResolver(paymentSchema),
+    defaultValues: {
+      paymentMethod: "mpesa",
+    },
+  });
+
   const {
     register: registerPayment,
     handleSubmit: handlePaymentSubmit,
@@ -69,12 +78,7 @@ const CheckoutPage: React.FC = () => {
     setValue: setPaymentValue,
     watch: watchPaymentMethod,
     getValues: getPaymentValues, // To get payment data for combined submission
-  } = useForm<PaymentFormValues>({
-    resolver: zodResolver(paymentSchema),
-    defaultValues: {
-      paymentMethod: "mpesa",
-    },
-  });
+  } = paymentForm;
 
   const selectedPaymentMethod = watchPaymentMethod("paymentMethod");
 
@@ -139,8 +143,8 @@ const CheckoutPage: React.FC = () => {
   // Combined submission handler for both forms
   const onPlaceOrder = async () => {
     // Validate both forms
-    const shippingValid = await handleShippingSubmit(() => { /* do nothing, just validate */ })();
-    const paymentValid = await handlePaymentSubmit(() => { /* do nothing, just validate */ })();
+    const shippingValid = shippingForm.formState.isValid;
+    const paymentValid = paymentForm.formState.isValid;
 
     if (shippingValid && paymentValid) {
       const shippingData = getShippingValues();
