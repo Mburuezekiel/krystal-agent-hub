@@ -2,7 +2,7 @@
 import express from 'express';
 import asyncHandler from 'express-async-handler';
 import Notification from '../models/Notification.js'; // Adjust path as needed
-import auth from '../middleware/authMiddleware.js'; // Assuming your auth middleware is here
+ // Assuming your auth middleware is here
 import { protect, admin, agent } from '../middleware/authMiddleware.js'; // Assuming you have role-based middleware
 
 const router = express.Router();
