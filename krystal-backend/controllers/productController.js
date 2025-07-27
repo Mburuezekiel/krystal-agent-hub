@@ -1,6 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import Product from '../models/Product.js';
-import Notification from '../models/Notification.js';
+import Notification from '../models/Notification.js'; // Assuming you have a Notification model
 
 // @desc    Create a new product
 // @route   POST /api/products
@@ -12,13 +12,16 @@ const createProduct = asyncHandler(async (req, res) => {
     sku, tags, isActive
   } = req.body;
 
-  const agentId = req.user._id; // User from protect middleware
+  // req.user is populated by the protect middleware
+  const agentId = req.user._id;
 
+  // Basic validation for required fields
   if (!name || !price || !category || !description || !brand) {
     res.status(400);
     throw new Error('Please fill all required product fields: name, price, category, description, brand.');
   }
 
+  // Set a default image URL if not provided
   const defaultImageUrl = 'https://placehold.co/400x500/D81E05/FFFFFF?text=Product';
   const finalImageUrl = imageUrl || defaultImageUrl;
 
@@ -28,20 +31,20 @@ const createProduct = asyncHandler(async (req, res) => {
     imageUrl: finalImageUrl,
     category,
     oldPrice,
-    isNew: isNew !== undefined ? isNew : false,
-    isTrending: isTrending !== undefined ? isTrending : false,
-    isPromotional: isPromotional !== undefined ? isPromotional : false,
+    isNew: isNew !== undefined ? isNew : false, // Default to false if not provided
+    isTrending: isTrending !== undefined ? isTrending : false, // Default to false
+    isPromotional: isPromotional !== undefined ? isPromotional : false, // Default to false
     description,
     brand,
-    stock: stock !== undefined ? stock : 0,
-    images: images && images.length > 0 ? images : [finalImageUrl],
-    specifications: specifications || {},
-    sku,
-    tags: tags || [],
-    isActive: isActive !== undefined ? isActive : true,
+    stock: stock !== undefined ? stock : 0, // Default to 0 if not provided
+    images: images && images.length > 0 ? images : [finalImageUrl], // Use provided images or default
+    specifications: specifications || {}, // Default to empty object
+    sku, // SKU might be optional or generated in a real app
+    tags: tags || [], // Default to empty array
+    isActive: isActive !== undefined ? isActive : true, // Default to true
     agent: agentId,
-    reviewStatus: 'pending', // New products are pending review
-    rejectionReason: null,
+    reviewStatus: 'pending', // New products are pending review by default
+    rejectionReason: null, // No rejection reason initially
   });
 
   const createdProduct = await product.save();
@@ -49,9 +52,9 @@ const createProduct = asyncHandler(async (req, res) => {
 });
 
 // @desc    Get all products (with filters and role-based access)
-// @route   GET /api/products (for public/agent access to their own products)
-// @route   GET /api/products/admin (for admin access to all products)
-// @access  Public, Private/Admin, Private/Agent
+// @route   GET /api/products
+// @route   GET /api/products/admin (for admin-specific access)
+// @access  Public (for approved/active products), Private/Admin, Private/Agent
 const getProducts = asyncHandler(async (req, res) => {
   const pageSize = parseInt(req.query.pageSize) || 10;
   const page = parseInt(req.query.pageNumber) || 1;
@@ -59,7 +62,7 @@ const getProducts = asyncHandler(async (req, res) => {
     ? {
         name: {
           $regex: req.query.keyword,
-          $options: 'i',
+          $options: 'i', // Case-insensitive search
         },
       }
     : {};
@@ -67,6 +70,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const category = req.query.category ? { category: req.query.category } : {};
   const brand = req.query.brand ? { brand: req.query.brand } : {};
 
+  // Base query: starts with keyword, category, brand filters
   let findQuery = {
     ...keyword,
     ...category,
@@ -74,11 +78,11 @@ const getProducts = asyncHandler(async (req, res) => {
   };
 
   // Default filters for public/unauthenticated users
-  // These will be overridden for authenticated roles below
+  // These will be overridden for admin/agent roles below
   findQuery.reviewStatus = 'approved';
   findQuery.isActive = true;
 
-  // Apply boolean filters if present
+  // Apply boolean filters if present in query
   if (req.query.isNew === 'true') {
     findQuery.isNew = true;
   }
@@ -89,9 +93,11 @@ const getProducts = asyncHandler(async (req, res) => {
     findQuery.isPromotional = true;
   }
 
-  // --- Personalized Recommendations Logic ---
-  // This logic is best suited for its own controller/route but kept here as per your original structure.
+  // --- Personalized Recommendations Logic (from your original code) ---
+  // This block should ideally be in its own dedicated controller function
+  // and route, but is kept here for consistency with your provided structure.
   if (req.query.personalized === 'true' || req.query.userId) {
+    // For personalized recommendations, always ensure products are approved and active
     findQuery.reviewStatus = 'approved';
     findQuery.isActive = true;
 
@@ -100,6 +106,7 @@ const getProducts = asyncHandler(async (req, res) => {
       return res.json({ products: [], page: 1, pages: 1, totalCount: 0 });
     }
 
+    // Implement random skip for personalized recommendations
     const maxSkip = Math.max(0, totalApprovedActiveProducts - pageSize);
     const randomSkip = Math.floor(Math.random() * (maxSkip + 1));
 
@@ -108,59 +115,61 @@ const getProducts = asyncHandler(async (req, res) => {
       .skip(randomSkip)
       .limit(pageSize);
 
+    // For personalized, we return a single "page" of random products
     return res.json({ products, page: 1, pages: 1, totalCount: products.length });
   }
 
   // --- Role-based Access and Filtering ---
+  // This is where admin and agent specific filtering logic applies
   if (req.user) {
     if (req.user.role === 'admin') {
-      // Admin can see ALL products by default, unless specific filters are applied.
-      // So, remove the initial public filters.
+      // Admin can see ALL products by default, so remove public filters
       delete findQuery.reviewStatus;
       delete findQuery.isActive;
 
-      // Allow admin to filter by reviewStatus (pending, approved, rejected, all)
+      // Allow admin to filter by specific reviewStatus (e.g., 'pending', 'rejected', 'approved', 'all')
       if (req.query.reviewStatus && req.query.reviewStatus !== 'all') {
         findQuery.reviewStatus = req.query.reviewStatus;
       }
-      // Allow admin to filter by isActive (true, false, all)
+      // Allow admin to filter by isActive status (true, false, 'all')
       if (req.query.isActive !== undefined && req.query.isActive !== 'all') {
         findQuery.isActive = req.query.isActive === 'true';
       } else if (req.query.isActive === 'all') {
+        // If 'all' is explicitly requested, don't filter by isActive
         delete findQuery.isActive;
       }
 
     } else if (req.user.role === 'agent') {
-      // Agents only see their own products by default.
+      // Agents can only see their own products
       findQuery.agent = req.user._id;
+      // Agents can filter their own products by reviewStatus and isActive
+      delete findQuery.reviewStatus; // Remove default 'approved' for agents
+      delete findQuery.isActive;     // Remove default 'active' for agents
 
-      // Remove default public filters so agents can see *all* statuses of *their* products
-      delete findQuery.reviewStatus;
-      delete findQuery.isActive;
-
-      // Allow agents to filter their *own* products by specific reviewStatus or 'all'
       if (req.query.reviewStatus && req.query.reviewStatus !== 'all') {
         findQuery.reviewStatus = req.query.reviewStatus;
       }
-      // Allow agents to filter their *own* products by isActive or 'all'
       if (req.query.isActive !== undefined && req.query.isActive !== 'all') {
         findQuery.isActive = req.query.isActive === 'true';
       } else if (req.query.isActive === 'all') {
+        // If 'all' is explicitly requested, don't filter by isActive
         delete findQuery.isActive;
       }
     }
-    // If user is authenticated but not admin/agent (e.g., customer using a protected route),
-    // the initial findQuery defaults (reviewStatus: 'approved', isActive: true) still apply.
+    // For non-admin/non-agent authenticated users, the default public filters apply.
   }
-  // If no req.user (public access), the initial findQuery defaults remain.
+  // If req.user is not present (public access), the initial findQuery defaults remain:
+  // reviewStatus: 'approved', isActive: true
 
-
+  // Count total documents matching the query for pagination
   const count = await Product.countDocuments(findQuery);
+
+  // Fetch products with pagination and sorting
   const products = await Product.find(findQuery)
-    .populate('agent', 'firstName lastName email userName')
+    .populate('agent', 'firstName lastName email userName') // Populate agent details
     .limit(pageSize)
     .skip(pageSize * (page - 1))
-    .sort({ createdAt: -1 });
+    .sort({ createdAt: -1 }); // Sort by creation date, newest first
 
   res.json({ products, page, pages: Math.ceil(count / pageSize), totalCount: count });
 });
@@ -172,18 +181,21 @@ const getProductById = asyncHandler(async (req, res) => {
   const product = await Product.findById(req.params.id).populate('agent', 'firstName lastName email userName');
 
   if (product) {
+    // Check if user is authenticated and is admin or agent
     if (req.user && (req.user.role === 'admin' || req.user.role === 'agent')) {
+      // If agent, ensure they own the product or it's publicly viewable
       if (req.user.role === 'agent' && product.agent.toString() !== req.user._id.toString()) {
-        // Agent can only view other agents' products if they are publicly viewable
+        // Agent can only view other agents' products if approved and active
         if (product.reviewStatus !== 'approved' || !product.isActive) {
           res.status(404);
           throw new Error('Product not found or not available for public viewing');
         }
       }
-      // Admin or owning agent can view the product regardless of status
+      // Admin can view any product regardless of status
+      // Agent owner can view their own product regardless of status
       res.json(product);
     } else {
-      // Public access: requires approved and active status
+      // Public access: only approved and active products
       if (product.reviewStatus === 'approved' && product.isActive) {
         res.json(product);
       } else {
@@ -213,11 +225,13 @@ const updateProduct = asyncHandler(async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     const isOwner = product.agent.toString() === req.user._id.toString();
 
+    // Only admin or product owner can update
     if (!isAdmin && !isOwner) {
       res.status(403);
       throw new Error('Not authorized to update this product');
     }
 
+    // Update fields if provided in the request body
     product.name = name !== undefined ? name : product.name;
     product.price = price !== undefined ? price : product.price;
     product.imageUrl = imageUrl !== undefined ? imageUrl : product.imageUrl;
@@ -231,16 +245,17 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.stock = stock !== undefined ? stock : product.stock;
     product.rating = rating !== undefined ? rating : product.rating;
     product.numReviews = numReviews !== undefined ? numReviews : product.numReviews;
-    product.images = images && images.length > 0 ? images : product.images;
+    product.images = images && images.length > 0 ? images : product.images; // Update images if new array provided
     product.specifications = specifications !== undefined ? specifications : product.specifications;
     product.sku = sku !== undefined ? sku : product.sku;
     product.tags = tags !== undefined ? tags : product.tags;
     product.isActive = isActive !== undefined ? isActive : product.isActive;
 
-    // If an agent (not admin) updates an approved product, set status back to pending for re-review
+    // If an agent updates an already approved product, set status back to pending for re-review
+    // Admins can update without changing reviewStatus unless they explicitly set it
     if (isOwner && !isAdmin && product.reviewStatus === 'approved') {
         product.reviewStatus = 'pending';
-        product.rejectionReason = null;
+        product.rejectionReason = null; // Clear rejection reason on agent update
     }
 
     const updatedProduct = await product.save();
@@ -261,6 +276,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     const isOwner = product.agent.toString() === req.user._id.toString();
 
+    // Only admin or product owner can delete (soft delete)
     if (!isAdmin && !isOwner) {
       res.status(403);
       throw new Error('Not authorized to delete this product');
@@ -275,61 +291,7 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// @desc    Review/Approve/Reject a product
-// @route   PUT /api/products/:id/review
-// @access  Private/Admin
-const reviewProduct = asyncHandler(async (req, res) => {
-    const { status, reason } = req.body;
-    const productId = req.params.id;
-    const product = await Product.findById(productId).populate('agent', 'email');
 
-    if (product) {
-        if (status === 'approved' || status === 'rejected') {
-            const oldStatus = product.reviewStatus;
-
-            product.reviewStatus = status;
-            product.rejectionReason = status === 'rejected' ? reason : null;
-
-            if (status === 'rejected' && !reason) {
-                res.status(400);
-                throw new Error('Rejection reason is required when status is rejected');
-            }
-
-            const updatedProduct = await product.save();
-
-            if (oldStatus !== status) {
-                let notificationMessage;
-                let notificationType;
-
-                if (status === 'approved') {
-                    notificationMessage = `Your product "${product.name}" has been approved! It is now live on the marketplace.`;
-                    notificationType = 'approval';
-                } else if (status === 'rejected') {
-                    notificationMessage = `Your product "${product.name}" was rejected. Reason: ${reason || 'No specific reason provided.'}`;
-                    notificationType = 'rejection';
-                }
-
-                if (notificationMessage && product.agent) {
-                    await Notification.create({
-                        agent: product.agent._id,
-                        type: notificationType,
-                        message: notificationMessage,
-                        product: updatedProduct._id,
-                    });
-                    console.log(`Notification sent to agent ${product.agent._id} for product ${updatedProduct._id}`);
-                }
-            }
-
-            res.json(updatedProduct);
-        } else {
-            res.status(400);
-            throw new Error('Invalid review status. Must be "approved" or "rejected".');
-        }
-    } else {
-        res.status(404);
-        throw new Error('Product not found');
-    }
-});
 
 // @desc    Upload a product image URL
 // @route   POST /api/products/:id/upload-image
@@ -341,16 +303,21 @@ const uploadProductImage = asyncHandler(async (req, res) => {
     const isAdmin = req.user.role === 'admin';
     const isOwner = product.agent.toString() === req.user._id.toString();
 
+    // Only admin or product owner can upload images for this product
     if (!isAdmin && !isOwner) {
       res.status(403);
       throw new Error('Not authorized to upload images for this product');
     }
 
+    // For simplicity, we're just taking a URL from the body.
+    // In a real app, this would involve file uploads to cloud storage (e.g., Cloudinary, S3).
     const newImageUrl = req.body.imageUrl || `https://placehold.co/400x500/0000FF/FFFFFF?text=Image-${Date.now()}`;
 
+    // Add image to the images array if it's not already there
     if (!product.images.includes(newImageUrl)) {
         product.images.push(newImageUrl);
     }
+    // Optionally update the main imageUrl to the newly uploaded one
     product.imageUrl = newImageUrl;
 
     await product.save();
@@ -366,15 +333,16 @@ const uploadProductImage = asyncHandler(async (req, res) => {
 // @access  Public
 const getPersonalizedRecommendations = asyncHandler(async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 8;
+    const limit = parseInt(req.query.limit) || 8; // Default to 8 recommendations
     console.log(`Backend: Attempting to fetch ${limit} active and approved products for recommendations.`);
 
+    // Find products that are active and approved
     const products = await Product.find({
       isActive: true,
       reviewStatus: 'approved'
     })
     .limit(limit)
-    .lean();
+    .lean(); // .lean() for faster query if you don't need Mongoose document methods
 
     console.log(`Backend: Found ${products ? products.length : 0} active and approved products for recommendations.`);
 
@@ -383,12 +351,13 @@ const getPersonalizedRecommendations = asyncHandler(async (req, res) => {
       return res.status(200).json({ products: [], page: 1, pages: 1, totalCount: 0 });
     }
 
+    // Simple shuffling for "personalization" (random selection)
     const shuffledProducts = products.sort(() => 0.5 - Math.random());
 
     res.status(200).json({
       products: shuffledProducts,
-      page: 1,
-      pages: 1,
+      page: 1, // Always 1 for recommendations as it's a single set
+      pages: 1, // Always 1 for recommendations
       totalCount: shuffledProducts.length
     });
     console.log('Backend: Successfully sent recommendations response.');
@@ -403,6 +372,73 @@ const getPersonalizedRecommendations = asyncHandler(async (req, res) => {
   }
 });
 
+
+
+// @desc    Get all products for admin review (with search and filter)
+// @route   GET /api/products/admin
+// @access  Private/Admin
+const getProductsForAdmin = asyncHandler(async (req, res) => {
+  const pageSize = 10; // Number of products per page
+  const page = Number(req.query.pageNumber) || 1; // Current page number
+
+  const keyword = req.query.keyword
+    ? {
+        $or: [
+          { name: { $regex: req.query.keyword, $options: 'i' } },
+          { brand: { $regex: req.query.keyword, $options: 'i' } },
+        ],
+      }
+    : {};
+
+  const statusFilter = req.query.reviewStatus;
+  const filter = { ...keyword };
+
+  if (statusFilter && statusFilter !== 'all') {
+    filter.reviewStatus = statusFilter;
+  }
+
+  const count = await Product.countDocuments({ ...filter });
+  const products = await Product.find({ ...filter })
+    .populate('agent', 'firstName lastName userName email') // Populate agent details
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  res.json({ products, page, pages: Math.ceil(count / pageSize), totalCount: count });
+});
+
+// @desc    Review a product (approve/reject)
+// @route   PUT /api/products/:id/review
+// @access  Private/Admin
+const reviewProduct = asyncHandler(async (req, res) => {
+  const { status, reason } = req.body; // status: "approved" or "rejected", reason (optional for approved)
+  const { id } = req.params;
+
+  const product = await Product.findById(id);
+
+  if (product) {
+    if (status === 'approved') {
+      product.reviewStatus = 'approved';
+      product.rejectionReason = undefined; // Clear rejection reason if approved
+    } else if (status === 'rejected') {
+      if (!reason) {
+        res.status(400);
+        throw new Error('Rejection reason is required for rejected status.');
+      }
+      product.reviewStatus = 'rejected';
+      product.rejectionReason = reason;
+    } else {
+      res.status(400);
+      throw new Error('Invalid review status. Must be "approved" or "rejected".');
+    }
+
+    const updatedProduct = await product.save();
+    res.json(updatedProduct);
+  } else {
+    res.status(404);
+    throw new Error('Product not found');
+  }
+});
+
 export {
   getPersonalizedRecommendations,
   createProduct,
@@ -411,5 +447,6 @@ export {
   updateProduct,
   deleteProduct,
   reviewProduct,
+  getProductsForAdmin,
   uploadProductImage,
 };
