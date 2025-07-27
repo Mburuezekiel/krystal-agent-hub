@@ -36,7 +36,7 @@ const LoginPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "https://krystal-agent-hub.onrender.com/api/auth/login",
+        "https://krystal-agent-hub.onrender.com/api/auth/user/login",
         {
           method: "POST",
           headers: {
