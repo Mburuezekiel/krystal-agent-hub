@@ -61,6 +61,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const category = req.query.category ? { category: req.query.category } : {};
   const brand = req.query.brand ? { brand: req.query.brand } : {};
 
+  // Removed ': any' type annotation as it's a JavaScript file
   let findQuery = {
     ...keyword,
     ...category,
@@ -103,7 +104,7 @@ const getProducts = asyncHandler(async (req, res) => {
     if (req.user.role === 'admin') {
       delete findQuery.reviewStatus;
       delete findQuery.isActive;
-      if (req.query.reviewStatus) {
+      if (req.query.reviewStatus && req.query.reviewStatus !== 'all') {
         findQuery.reviewStatus = req.query.reviewStatus;
       }
       if (req.query.isActive !== undefined) {
@@ -112,13 +113,13 @@ const getProducts = asyncHandler(async (req, res) => {
     } else if (req.user.role === 'agent') {
       findQuery.agent = req.user._id;
       delete findQuery.reviewStatus;
-      if (req.query.reviewStatus) {
+      if (req.query.reviewStatus && req.query.reviewStatus !== 'all') {
         findQuery.reviewStatus = req.query.reviewStatus;
       }
       if (req.query.isActive !== undefined) {
           findQuery.isActive = req.query.isActive === 'true';
       } else {
-          findQuery.isActive = true;
+          delete findQuery.isActive;
       }
     }
   }
@@ -151,7 +152,7 @@ const getProductById = asyncHandler(async (req, res) => {
         res.json(product);
       } else {
         res.status(404);
-        throw new Error('Product not found or not available for public viewing');
+        throw new new Error('Product not found or not available for public viewing');
       }
     }
   } else {
@@ -231,39 +232,14 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
-// const reviewProduct = asyncHandler(async (req, res) => {
-//   const { status, reason } = req.body;
-//   const product = await Product.findById(req.params.id);
-
-//   if (product) {
-//     if (status === 'approved' || status === 'rejected') {
-//       product.reviewStatus = status;
-//       product.rejectionReason = status === 'rejected' ? reason : null;
-
-//       if (status === 'rejected' && !reason) {
-//         res.status(400);
-//         throw new Error('Rejection reason is required when status is rejected');
-//       }
-
-//       const updatedProduct = await product.save();
-//       res.json(updatedProduct);
-//     } else {
-//       res.status(400);
-//       throw new Error('Invalid review status. Must be "approved" or "rejected".');
-//     }
-//   } else {
-//     res.status(404);
-//     throw new Error('Product not found');
-//   }
-// });
 const reviewProduct = asyncHandler(async (req, res) => {
     const { status, reason } = req.body;
     const productId = req.params.id;
-    const product = await Product.findById(productId).populate('agent', 'email'); // Populate agent to get their ID for notification
+    const product = await Product.findById(productId).populate('agent', 'email');
 
     if (product) {
         if (status === 'approved' || status === 'rejected') {
-            const oldStatus = product.reviewStatus; // Keep track of old status
+            const oldStatus = product.reviewStatus;
 
             product.reviewStatus = status;
             product.rejectionReason = status === 'rejected' ? reason : null;
@@ -275,8 +251,7 @@ const reviewProduct = asyncHandler(async (req, res) => {
 
             const updatedProduct = await product.save();
 
-            // --- Notification Logic ---
-            if (oldStatus !== status) { // Only send notification if status actually changed
+            if (oldStatus !== status) {
                 let notificationMessage;
                 let notificationType;
 
@@ -298,7 +273,6 @@ const reviewProduct = asyncHandler(async (req, res) => {
                     console.log(`Notification sent to agent ${product.agent._id} for product ${updatedProduct._id}`);
                 }
             }
-            // --- End Notification Logic ---
 
             res.json(updatedProduct);
         } else {
@@ -329,7 +303,7 @@ const uploadProductImage = asyncHandler(async (req, res) => {
     if (!product.images.includes(newImageUrl)) {
         product.images.push(newImageUrl);
     }
-     product.imageUrl = newImageUrl;
+      product.imageUrl = newImageUrl;
 
     await product.save();
     res.json({ message: 'Image URL added (placeholder)', imageUrl: newImageUrl, images: product.images });
