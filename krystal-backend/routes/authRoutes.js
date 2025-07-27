@@ -92,6 +92,37 @@ router.post('/login', async (req, res) => {
   }
 });
 
+router.post('/user/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  try {
+    const user = await User.findOne({ email });
+
+    if (user && (await user.matchPassword(password))) {
+      if (user.role === 'admin' || user.role === 'agent'||  user.role === 'user') {
+        res.json({
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          userName: user.userName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          address: user.address,
+          role: user.role,
+          token: generateToken(user._id),
+        });
+      } else {
+        res.status(403).json({ message: 'Access denied: Only admin and agent accounts can log in here.' });
+      }
+    } else {
+      res.status(401).json({ message: 'Invalid email or password' });
+    }
+  } catch (error) {
+    console.error('Error during user login:', error);
+    res.status(500).json({ message: 'Server error during login' });
+  }
+});
+
 router.post('/forgotpassword', async (req, res) => {
   const { email } = req.body;
   let user;
