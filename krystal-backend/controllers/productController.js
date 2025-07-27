@@ -1,6 +1,7 @@
 import asyncHandler from 'express-async-handler';
 import Product from '../models/Product.js';
 import User from '../models/User.js';
+import Notification from '../models/Notification.js';
 
 const createProduct = asyncHandler(async (req, res) => {
   const {
@@ -230,32 +231,85 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
+// const reviewProduct = asyncHandler(async (req, res) => {
+//   const { status, reason } = req.body;
+//   const product = await Product.findById(req.params.id);
+
+//   if (product) {
+//     if (status === 'approved' || status === 'rejected') {
+//       product.reviewStatus = status;
+//       product.rejectionReason = status === 'rejected' ? reason : null;
+
+//       if (status === 'rejected' && !reason) {
+//         res.status(400);
+//         throw new Error('Rejection reason is required when status is rejected');
+//       }
+
+//       const updatedProduct = await product.save();
+//       res.json(updatedProduct);
+//     } else {
+//       res.status(400);
+//       throw new Error('Invalid review status. Must be "approved" or "rejected".');
+//     }
+//   } else {
+//     res.status(404);
+//     throw new Error('Product not found');
+//   }
+// });
 const reviewProduct = asyncHandler(async (req, res) => {
-  const { status, reason } = req.body;
-  const product = await Product.findById(req.params.id);
+    const { status, reason } = req.body;
+    const productId = req.params.id;
+    const product = await Product.findById(productId).populate('agent', 'email'); // Populate agent to get their ID for notification
 
-  if (product) {
-    if (status === 'approved' || status === 'rejected') {
-      product.reviewStatus = status;
-      product.rejectionReason = status === 'rejected' ? reason : null;
+    if (product) {
+        if (status === 'approved' || status === 'rejected') {
+            const oldStatus = product.reviewStatus; // Keep track of old status
 
-      if (status === 'rejected' && !reason) {
-        res.status(400);
-        throw new Error('Rejection reason is required when status is rejected');
-      }
+            product.reviewStatus = status;
+            product.rejectionReason = status === 'rejected' ? reason : null;
 
-      const updatedProduct = await product.save();
-      res.json(updatedProduct);
+            if (status === 'rejected' && !reason) {
+                res.status(400);
+                throw new Error('Rejection reason is required when status is rejected');
+            }
+
+            const updatedProduct = await product.save();
+
+            // --- Notification Logic ---
+            if (oldStatus !== status) { // Only send notification if status actually changed
+                let notificationMessage;
+                let notificationType;
+
+                if (status === 'approved') {
+                    notificationMessage = `Your product "${product.name}" has been approved! It is now live on the marketplace.`;
+                    notificationType = 'approval';
+                } else if (status === 'rejected') {
+                    notificationMessage = `Your product "${product.name}" was rejected. Reason: ${reason || 'No specific reason provided.'}`;
+                    notificationType = 'rejection';
+                }
+
+                if (notificationMessage && product.agent) {
+                    await Notification.create({
+                        agent: product.agent._id,
+                        type: notificationType,
+                        message: notificationMessage,
+                        product: updatedProduct._id,
+                    });
+                    console.log(`Notification sent to agent ${product.agent._id} for product ${updatedProduct._id}`);
+                }
+            }
+            // --- End Notification Logic ---
+
+            res.json(updatedProduct);
+        } else {
+            res.status(400);
+            throw new Error('Invalid review status. Must be "approved" or "rejected".');
+        }
     } else {
-      res.status(400);
-      throw new Error('Invalid review status. Must be "approved" or "rejected".');
+        res.status(404);
+        throw new Error('Product not found');
     }
-  } else {
-    res.status(404);
-    throw new Error('Product not found');
-  }
 });
-
 
 const uploadProductImage = asyncHandler(async (req, res) => {
 
