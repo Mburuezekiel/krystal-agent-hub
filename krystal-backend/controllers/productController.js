@@ -438,10 +438,41 @@ const reviewProduct = asyncHandler(async (req, res) => {
     throw new Error('Product not found');
   }
 });
+const getAgentProducts = asyncHandler(async (req, res) => {
+  const pageSize = 10; // You can make this configurable
+  const page = Number(req.query.pageNumber) || 1;
+  const agentId = req.user._id; // Get the ID of the authenticated agent
+
+  const keyword = req.query.keyword
+    ? {
+        $or: [
+          { name: { $regex: req.query.keyword, $options: 'i' } },
+          { brand: { $regex: req.query.keyword, $options: 'i' } },
+        ],
+      }
+    : {};
+
+  const statusFilter = req.query.reviewStatus;
+  const filter = { ...keyword, agent: agentId }; // IMPORTANT: Filter by agent ID
+
+  if (statusFilter && statusFilter !== 'all') {
+    filter.reviewStatus = statusFilter;
+  }
+
+  const count = await Product.countDocuments(filter);
+  const products = await Product.find(filter)
+    .populate('agent', 'firstName lastName userName email') // Still populate agent if you need their details
+    .limit(pageSize)
+    .skip(pageSize * (page - 1));
+
+  res.json({ products, page, pages: Math.ceil(count / pageSize), totalCount: count });
+});
+
 
 export {
   getPersonalizedRecommendations,
   createProduct,
+  getAgentProducts,
   getProducts,
   getProductById,
   updateProduct,

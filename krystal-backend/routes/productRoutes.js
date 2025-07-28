@@ -6,7 +6,9 @@ import {
     getProductById,
     updateProduct,
     deleteProduct,
+    getAgentProducts,
     reviewProduct,
+    getProductsForAdmin,
     getPersonalizedRecommendations,
     uploadProductImage,
 } from '../controllers/productController.js';
@@ -23,13 +25,13 @@ router.route('/').post(protect, agent, createProduct);
 
 // ADMIN-SPECIFIC ENDPOINT to get ALL products with various statuses
 // This route should come before general :id routes to avoid conflicts
-router.route('/admin').get(protect, admin, getProducts);
+router.route('/agent').get( agent, getAgentProducts);
+router.route('/admin').get( admin, getProductsForAdmin);
 
 router.route('/:id').get(getProductById);
 router.route('/:id').put(protect, agent, updateProduct).delete(protect, agent, deleteProduct);
 
 router.route('/:id/review').put(protect, admin, reviewProduct);
 router.route('/:id/upload-image').post(protect, agent, uploadProductImage);
-
 
 export default router;
