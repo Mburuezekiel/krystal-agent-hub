@@ -25,7 +25,7 @@ router.route('/').post(protect, agent, createProduct);
 
 // ADMIN-SPECIFIC ENDPOINT to get ALL products with various statuses
 // This route should come before general :id routes to avoid conflicts
-router.route('/agent').get( agent, getAgentProducts);
+router.route('/agent').get( protect,agent, getAgentProducts);
 router.route('/admin').get( admin, getProductsForAdmin);
 
 router.route('/:id').get(getProductById);
