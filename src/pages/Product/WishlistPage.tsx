@@ -10,8 +10,9 @@ import {
 } from '@/services/product-service';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Heart, ShoppingCart, Loader2, AlertCircle } from 'lucide-react';
+import { Heart, ShoppingCart, Loader2, AlertCircle, WifiOff } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { toast } from 'sonner';
 
 interface WishlistProduct extends Product {
@@ -20,6 +21,7 @@ interface WishlistProduct extends Product {
 const WishlistPage: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const authToken = localStorage.getItem('userToken');
+  const { isOnline, wasOffline } = useNetworkStatus();
 
   const [wishlistItems, setWishlistItems] = useState<WishlistProduct[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,7 +62,11 @@ const WishlistPage: React.FC = () => {
       setWishlistItems(fetchedItems);
     } catch (err: any) {
       console.error("Failed to fetch wishlist:", err);
-      setError(err.response?.data?.message || "Failed to load wishlist. Please try again.");
+      if (!isOnline) {
+        setError('You are offline. Please check your internet connection.');
+      } else {
+        setError(err.response?.data?.message || "Failed to load wishlist. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -69,6 +75,13 @@ const WishlistPage: React.FC = () => {
   useEffect(() => {
     fetchWishlist();
   }, [isLoggedIn, authToken]);
+
+  // Auto-reload when coming back online
+  useEffect(() => {
+    if (isOnline && wasOffline && error) {
+      fetchWishlist();
+    }
+  }, [isOnline, wasOffline, error]);
 
   const handleRemoveFromWishlist = async (productId: string) => {
     const productToRemove = wishlistItems.find(p => p._id === productId);
@@ -135,12 +148,20 @@ const WishlistPage: React.FC = () => {
           </div>
         ) : error ? (
           <div className="flex flex-col items-center justify-center min-h-[300px] bg-white rounded-lg shadow-md py-12">
-            <AlertCircle className="h-12 w-12 text-red-500 mb-4" />
+            {!isOnline ? <WifiOff className="h-12 w-12 text-gray-500 mb-4" /> : <AlertCircle className="h-12 w-12 text-red-500 mb-4" />}
             <h2 className="text-2xl md:text-3xl font-bold mb-2 text-red-600">Error Loading Wishlist</h2>
             <p className="text-lg text-red-500 text-center max-w-md">{error}</p>
-            <Button onClick={fetchWishlist} className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md px-6 py-3 font-semibold">
-              Retry
-            </Button>
+            {isOnline && (
+              <Button onClick={fetchWishlist} className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white rounded-md px-6 py-3 font-semibold">
+                Retry
+              </Button>
+            )}
+            {!isOnline && (
+              <div className="flex items-center text-gray-500 text-sm mt-4">
+                <WifiOff className="h-4 w-4 mr-2" />
+                Will automatically retry when connection is restored
+              </div>
+            )}
           </div>
         ) : wishlistItems.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-lg shadow-md">

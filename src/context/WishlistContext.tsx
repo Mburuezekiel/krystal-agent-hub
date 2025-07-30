@@ -10,14 +10,14 @@ interface WishlistContextType {
   addToWishlist: (productId: string) => Promise<void>;
   removeFromWishlist: (productId: string) => Promise<void>;
   refreshWishlist: () => Promise<void>;
-  isAddingToWishlist: boolean;
+  isAddingToWishlist: (productId: string) => boolean;
 }
 
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState<string[]>([]);
-  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
+  const [addingToWishlistProducts, setAddingToWishlistProducts] = useState<Set<string>>(new Set());
   const { isLoggedIn } = useAuth();
 
   const refreshWishlist = async () => {
@@ -48,7 +48,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
-    setIsAddingToWishlist(true);
+    setAddingToWishlistProducts(prev => new Set(prev).add(productId));
     try {
       const token = localStorage.getItem('userToken');
       if (token) {
@@ -65,7 +65,11 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
         toast.error(error.response?.data?.message || 'Failed to add to wishlist');
       }
     } finally {
-      setIsAddingToWishlist(false);
+      setAddingToWishlistProducts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
   };
 
@@ -75,6 +79,7 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
       return;
     }
 
+    setAddingToWishlistProducts(prev => new Set(prev).add(productId));
     try {
       const token = localStorage.getItem('userToken');
       if (token) {
@@ -85,14 +90,24 @@ export const WishlistProvider: React.FC<{ children: ReactNode }> = ({ children }
     } catch (error: any) {
       console.error('Error removing from wishlist:', error);
       toast.error(error.response?.data?.message || 'Failed to remove from wishlist');
+    } finally {
+      setAddingToWishlistProducts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
+  };
+
+  const isAddingToWishlist = (productId: string) => {
+    return addingToWishlistProducts.has(productId);
   };
 
   useEffect(() => {
     refreshWishlist();
   }, [isLoggedIn]);
 
-  return (
+    return (
     <WishlistContext.Provider value={{ 
       wishlistItems, 
       isInWishlist, 

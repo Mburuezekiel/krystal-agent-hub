@@ -14,14 +14,14 @@ interface CartContextType {
   cartCount: number;
   addToCart: (productId: string, quantity?: number) => Promise<void>;
   refreshCart: () => Promise<void>;
-  isAddingToCart: boolean;
+  isAddingToCart: (productId: string) => boolean;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isAddingToCart, setIsAddingToCart] = useState(false);
+  const [addingToCartProducts, setAddingToCartProducts] = useState<Set<string>>(new Set());
   const { isLoggedIn } = useAuth();
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
@@ -53,7 +53,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       return;
     }
 
-    setIsAddingToCart(true);
+    setAddingToCartProducts(prev => new Set(prev).add(productId));
     try {
       const token = localStorage.getItem('userToken');
       if (token) {
@@ -79,8 +79,16 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         toast.error('Failed to add to cart');
       }
     } finally {
-      setIsAddingToCart(false);
+      setAddingToCartProducts(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(productId);
+        return newSet;
+      });
     }
+  };
+
+  const isAddingToCart = (productId: string) => {
+    return addingToCartProducts.has(productId);
   };
 
   useEffect(() => {

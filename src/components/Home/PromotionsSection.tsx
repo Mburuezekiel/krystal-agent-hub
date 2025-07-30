@@ -180,8 +180,8 @@ const PromotionsSection: React.FC = () => {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-2 gap-6 items-stretch">
-            {promotions.map((promo) => (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch">
+            {promotions.slice(0, 2).map((promo) => (
               <PromotionCard key={promo._id} promotion={promo} />
             ))}
           </div>

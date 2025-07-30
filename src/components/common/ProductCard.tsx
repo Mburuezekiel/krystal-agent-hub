@@ -93,9 +93,9 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({ product, classNam
               size="sm"
               className="absolute top-2 right-2 h-8 w-8 p-0 bg-white/80 hover:bg-white shadow-sm rounded-full z-10" // Added rounded-full and z-10
               onClick={handleWishlistToggle}
-              disabled={isAddingToWishlist}
+              disabled={isAddingToWishlist(product._id)}
             >
-              {isAddingToWishlist ? (
+              {isAddingToWishlist(product._id) ? (
                 <Loader2 className="h-4 w-4 animate-spin text-gray-600" /> 
               ) : (
                 <Heart 
@@ -150,11 +150,11 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({ product, classNam
             {/* Add to Cart Button */}
             <Button
               onClick={handleAddToCart}
-              disabled={isAddingToCart || product.stock < 1 || productInCart} // Disable if already in cart
+              disabled={isAddingToCart(product._id) || product.stock < 1 || productInCart} // Disable if already in cart
               className={`w-full ${productInCart ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#D81E05] hover:bg-[#A01A04]'} text-white transition-colors duration-200`} // Style when in cart
               size="sm"
             >
-              {isAddingToCart ? (
+              {isAddingToCart(product._id) ? (
                 <>
                   <Loader2 className="h-4 w-4 animate-spin mr-2" />
                   <span className="hidden sm:inline">Adding...</span>

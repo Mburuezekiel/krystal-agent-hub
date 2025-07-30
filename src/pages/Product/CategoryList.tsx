@@ -1,31 +1,14 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Star, ChevronRight } from "lucide-react";
+import { ChevronRight, Loader2, AlertCircle, WifiOff } from "lucide-react";
 import {
   getAllCategories,
   getProductsByCategory,
 } from "@/services/product-service";
+import { ProductCard } from '@/components/common/ProductCard';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { Button } from '@/components/ui/button';
 
-/**
- * StarRating component displays a star rating.
- * @param {object} props - The component props.
- * @param {number} props.rating - The current rating (1-5).
- * @param {string} [props.size="w-4 h-4"] - Tailwind CSS classes for star size.
- */
-const StarRating = ({ rating, size = "w-4 h-4" }) => {
-  return (
-    <div className="flex items-center gap-1">
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          className={`${size} ${
-            star <= rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
-          }`}
-        />
-      ))}
-    </div>
-  );
-};
 
 const formatCategoryNameForLink = (name: string): string => {
   if (!name) return '';
@@ -42,59 +25,6 @@ const formatCategoryNameForLink = (name: string): string => {
 };
 
 
-const ProductCard = ({ product }) => {
-  if (!product) return null;
-
-  const savings = product.originalPrice && product.originalPrice > product.price
-    ? product.originalPrice - product.price
-    : 0;
-
-  return (
-    <Link
-      to={`/product/${product._id}`}
-      className="block bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-200 overflow-hidden group"
-    >
-      <div className="relative w-full h-32 sm:h-40 overflow-hidden">
-        <img
-          src={product.imageUrl}
-          alt={product.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          onError={(e) => {
-            e.currentTarget.src = `https://placehold.co/128x128/cccccc/333333?text=No+Image`;
-            e.currentTarget.onerror = null;
-          }}
-        />
-        {product.stock < 1 && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-            <span className="text-white text-xs sm:text-sm font-medium">Out of Stock</span>
-          </div>
-        )}
-      </div>
-      <div className="p-2 sm:p-3">
-        <h3 className="font-semibold text-gray-800 text-xs sm:text-sm mb-0.5 sm:mb-1 line-clamp-2">
-          {product.name}
-        </h3>
-        <p className="text-gray-600 text-[0.65rem] sm:text-xs mb-1 line-clamp-1">
-          {product.brand}
-        </p>
-        <div className="flex items-center gap-1 mb-1">
-          <StarRating rating={Math.round(product.rating || 0)} size="w-3 h-3" />
-          <span className="text-[0.6rem] sm:text-xs text-gray-500">({product.numReviews || 0})</span>
-        </div>
-        <div className="flex items-baseline gap-1">
-          <span className="text-sm sm:text-base font-bold text-gray-900">
-            KES {product.price.toLocaleString()}
-          </span>
-          {savings > 0 && (
-            <span className="text-[0.6rem] sm:text-xs text-gray-500 line-through">
-              KES {product.originalPrice.toLocaleString()}
-            </span>
-          )}
-        </div>
-      </div>
-    </Link>
-  );
-};
 
 /**
  * CategoryListPage component displays products grouped by category.
@@ -104,41 +34,52 @@ const CategoryListPage = () => {
   const [categoriesWithProducts, setCategoriesWithProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { isOnline, wasOffline } = useNetworkStatus();
+
+  const fetchCategoryData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const categories = await getAllCategories();
+
+      const categoryData = await Promise.all(
+        categories.map(async (categoryName) => {
+          const products = await getProductsByCategory(categoryName, 4);
+          return { name: categoryName, products };
+        })
+      );
+      setCategoriesWithProducts(categoryData);
+    } catch (err: any) {
+      console.error("Failed to fetch category data:", err);
+      if (!isOnline) {
+        setError('You are offline. Please check your internet connection.');
+      } else {
+        setError(err.message || "Failed to load categories. Please try again later.");
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    /**
-     * Fetches category data and associated products.
-     * Handles loading states and errors.
-     */
-    const fetchCategoryData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        const categories = await getAllCategories();
-
-        const categoryData = await Promise.all(
-          categories.map(async (categoryName) => {
-            const products = await getProductsByCategory(categoryName, 4);
-            return { name: categoryName, products };
-          })
-        );
-        setCategoriesWithProducts(categoryData);
-      } catch (err) {
-        console.error("Failed to fetch category data:", err);
-        setError("Failed to load categories. Please try again later.");
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchCategoryData();
   }, []);
+
+  // Auto-reload when coming back online
+  useEffect(() => {
+    if (isOnline && wasOffline && error) {
+      fetchCategoryData();
+    }
+  }, [isOnline, wasOffline, error]);
 
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 pb-24">
-        <p className="text-gray-600 text-lg">Loading categories...</p>
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-10 w-10 animate-spin text-[#D81E05] mb-4" />
+          <p className="text-gray-600 text-lg">Loading categories...</p>
+        </div>
       </div>
     );
   }
@@ -146,7 +87,24 @@ const CategoryListPage = () => {
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 p-4 pb-24">
-        <p className="text-red-600 text-lg">{error}</p>
+        <div className="flex flex-col items-center text-center">
+          {!isOnline ? <WifiOff className="h-10 w-10 text-gray-500 mb-4" /> : <AlertCircle className="h-10 w-10 text-red-500 mb-4" />}
+          <p className="text-red-600 text-lg mb-4">{error}</p>
+          {isOnline && (
+            <Button
+              onClick={fetchCategoryData}
+              className="bg-[#D81E05] hover:bg-[#A01A04] text-white"
+            >
+              Retry
+            </Button>
+          )}
+          {!isOnline && (
+            <div className="flex items-center text-gray-500 text-sm">
+              <WifiOff className="h-4 w-4 mr-2" />
+              Will automatically retry when connection is restored
+            </div>
+          )}
+        </div>
       </div>
     );
   }

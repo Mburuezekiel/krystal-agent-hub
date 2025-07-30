@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { Star } from 'lucide-react';
+import { Loader2, AlertCircle, WifiOff, Star } from 'lucide-react';
 
 import { getProductsByCategory, Product } from '@/services/product-service';
-import { Card, CardContent } from '@/components/ui/card';
+import { ProductCard } from '@/components/common/ProductCard';
+import { useNetworkStatus } from '@/hooks/useNetworkStatus';
+import { Button } from '@/components/ui/button';
 
 const StarRating = ({ rating, size = "w-4 h-4" }) => {
   return (
@@ -30,6 +32,7 @@ const CategoryPage: React.FC = () => {
   const [allProducts, setAllProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const { isOnline, wasOffline } = useNetworkStatus();
 
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [selectedPriceRange, setSelectedPriceRange] = useState<string>('');
@@ -37,25 +40,36 @@ const CategoryPage: React.FC = () => {
   const [selectedRating, setSelectedRating] = useState<number>(0);
   const [sortBy, setSortBy] = useState<string>('popularity');
 
-  useEffect(() => {
-    const fetchCategoryProducts = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const products = await getProductsByCategory(categoryName);
-        setAllProducts(products);
-      } catch (err) {
-        console.error(`Error fetching products for category ${categoryName}:`, err);
-        setError("Failed to load products for this category.");
-      } finally {
-        setLoading(false);
+  const fetchCategoryProducts = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const products = await getProductsByCategory(categoryName);
+      setAllProducts(products);
+    } catch (err: any) {
+      console.error(`Error fetching products for category ${categoryName}:`, err);
+      if (!isOnline) {
+        setError('You are offline. Please check your internet connection.');
+      } else {
+        setError(err.message || "Failed to load products for this category.");
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (categoryName) {
       fetchCategoryProducts();
     }
   }, [categoryName]);
+
+  // Auto-reload when coming back online
+  useEffect(() => {
+    if (isOnline && wasOffline && error) {
+      fetchCategoryProducts();
+    }
+  }, [isOnline, wasOffline, error]);
 
   const uniqueBrands = useMemo(() => {
     const brands = new Set<string>();
@@ -118,22 +132,42 @@ const CategoryPage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24 text-center">
+      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24">
         <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-8 text-[#222222]">
           Shop {categoryName}
         </h1>
-        <p>Loading products for {categoryName}...</p>
+        <div className="flex flex-col justify-center items-center min-h-[200px] bg-white rounded-lg shadow-md p-8">
+          <Loader2 className="h-10 w-10 animate-spin text-[#D81E05]" />
+          <p className="mt-4 text-lg text-muted-foreground">Loading products for {categoryName}...</p>
+        </div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24 text-center">
+      <div className="container mx-auto px-4 py-8 md:py-12 text-[#222222] bg-[#F8F8F8] min-h-screen pb-24">
         <h1 className="text-3xl md:text-4xl font-extrabold text-center mb-8 text-[#222222]">
           Shop {categoryName}
         </h1>
-        <p className="text-red-500">Error: {error}</p>
+        <div className="flex flex-col justify-center items-center min-h-[200px] bg-white rounded-lg shadow-md p-8">
+          {!isOnline ? <WifiOff className="h-10 w-10 text-gray-500" /> : <AlertCircle className="h-10 w-10 text-red-500" />}
+          <p className="mt-4 text-lg text-gray-700">{error}</p>
+          {isOnline && (
+            <Button
+              onClick={fetchCategoryProducts}
+              className="mt-6 bg-[#D81E05] hover:bg-[#A01A04] text-white"
+            >
+              Retry
+            </Button>
+          )}
+          {!isOnline && (
+            <div className="flex items-center text-gray-500 text-sm mt-4">
+              <WifiOff className="h-4 w-4 mr-2" />
+              Will automatically retry when connection is restored
+            </div>
+          )}
+        </div>
       </div>
     );
   }
@@ -331,43 +365,7 @@ const CategoryPage: React.FC = () => {
           ) : (
             <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
               {filteredProducts.map((product) => (
-                <Card key={product._id} className="rounded-lg overflow-hidden shadow-sm hover:shadow-lg transition-all duration-300 bg-white flex flex-col h-full">
-                  <CardContent className="p-0 flex-grow flex flex-col">
-                    <Link to={`/product/${product._id}`} className="block">
-                      <div className="relative w-full h-32 sm:h-40 overflow-hidden">
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
-                            e.currentTarget.onerror = null;
-                          }}
-                        />
-                        {product.isNew && (
-                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-xs px-1.5 py-0.5 rounded-full font-semibold z-10">
-    NEW
-</span>
-                        )}
-                      </div>
-                      <div className="p-2 text-center flex-grow flex flex-col justify-between">
-                        <h3 className="text-xs sm:text-sm font-medium text-[#222222] mb-0.5 line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <div className="flex flex-col items-center justify-center gap-0.5 mt-1">
-                          {product.oldPrice !== undefined && product.oldPrice > 0 && (
-                            <p className="text-[0.6rem] text-gray-500 line-through">
-                              KES {product.oldPrice.toLocaleString()}
-                            </p>
-                          )}
-                          <p className="text-sm font-bold text-[#D81E05]">
-                            KES {product.price.toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </Link>
-                  </CardContent>
-                </Card>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           )}
