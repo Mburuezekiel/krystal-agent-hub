@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
@@ -96,7 +97,7 @@ const ProductDetailPage: React.FC = () => {
           }
 
           const productsInSameCategory = await getProductsByCategory(fetchedProduct.category);
-          let filteredRelated = productsInSameCategory
+          const filteredRelated = productsInSameCategory
             .filter(p => p._id !== fetchedProduct._id) // Filter out the current product
             .sort(() => 0.5 - Math.random()) // Shuffle remaining products
             .slice(0, 5); // Take up to 5

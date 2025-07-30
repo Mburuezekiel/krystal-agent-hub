@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import axios from "axios";
 
 export interface Product {
@@ -23,8 +24,6 @@ export interface Product {
 }
 
 export const ALL_CATEGORIES = [
-  "New In",
-  "Sale",
   "Women Clothing",
   "Beachwear",
   "Kids",
@@ -115,7 +114,7 @@ export const getProductsByCategory = async (
     const response = await axios.get(
       `${API_URL}?category=${encodeURIComponent(category)}`
     );
-    let products = getProductsArrayFromResponse(response.data);
+    const products = getProductsArrayFromResponse(response.data);
     return limit ? products.slice(0, limit) : products;
   } catch (error) {
     console.error(`Error fetching products for category "${category}":`, error);

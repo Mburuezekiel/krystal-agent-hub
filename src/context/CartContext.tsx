@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { addToCartApi, getCartApi } from '@/services/product-service';
 import { useAuth } from './AuthContext';
@@ -36,7 +37,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (token) {
         const response = await getCartApi(token);
         const items = response.cart?.items || [];
-        setCartItems(items.map((item: any) => ({
+        setCartItems(items.map((item: { product: { _id: string }; quantity: number }) => ({
           productId: item.product._id,
           quantity: item.quantity
         })));
@@ -60,9 +61,23 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         await refreshCart();
         toast.success('Added to cart successfully!');
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error adding to cart:', error);
-      toast.error(error.response?.data?.message || 'Failed to add to cart');
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'response' in error &&
+        typeof (error as any).response === 'object' &&
+        (error as any).response !== null &&
+        'data' in (error as any).response &&
+        typeof (error as any).response.data === 'object' &&
+        (error as any).response.data !== null &&
+        'message' in (error as any).response.data
+      ) {
+        toast.error((error as any).response.data.message || 'Failed to add to cart');
+      } else {
+        toast.error('Failed to add to cart');
+      }
     } finally {
       setIsAddingToCart(false);
     }
@@ -70,7 +85,7 @@ export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   useEffect(() => {
     refreshCart();
-  }, [isLoggedIn]);
+  }, [isLoggedIn, refreshCart]);
 
   return (
     <CartContext.Provider value={{ cartItems, cartCount, addToCart, refreshCart, isAddingToCart }}>

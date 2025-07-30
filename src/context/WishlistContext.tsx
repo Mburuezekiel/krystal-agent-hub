@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { addToWishlistApi, getWishlistApi, removeFromWishlistApi } from '@/services/product-service';
 import { useAuth } from './AuthContext';
