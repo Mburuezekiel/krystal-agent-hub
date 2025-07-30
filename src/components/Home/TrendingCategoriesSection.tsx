@@ -13,6 +13,7 @@ import {
   getPersonalizedRecommendations,
   Product,
 } from "@/services/product-service";
+import { ProductCard } from '@/components/common/ProductCard';
 import womenclothing from "../../assets/womenclothing.png";
 import menclothing from "../../assets/menclothing.png";
 import kids from "../../assets/kids.jpg";
@@ -290,41 +291,7 @@ const TrendingCategoriesSection: React.FC = () => {
                 key={product._id}
                 className="basis-1/2 sm:basis-1/3 md:basis-1/4 lg:basis-1/5 xl:basis-1/6 pl-2 sm:pl-3 md:pl-4"
               >
-                <Link to={`/product/${product._id}`} className="group block flex flex-col h-full">
-                  <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white flex flex-col h-full">
-                    <CardContent className="p-0 flex-grow-0">
-                      <div className="w-full h-32 sm:h-40 aspect-square bg-gray-100 overflow-hidden">
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
-                            e.currentTarget.onerror = null;
-                          }}
-                        />
-                        {product.isNew && (
-                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span> 
-                        )}
-                      </div>
-                    </CardContent>
-                    <div className="p-2 text-center flex-grow flex flex-col justify-between min-h-[5rem] sm:min-h-[6rem]">
-                      <h3 className="text-xs sm:text-sm font-medium text-[#222222] mb-0.5 line-clamp-2">
-                        {product.name}
-                      </h3>
-                      <div className="flex items-center justify-center gap-1 mt-auto">
-                        {product.oldPrice && (
-                          <p className="text-[0.6rem] text-gray-500 line-through">
-                            KES {product.oldPrice.toFixed(2)}
-                          </p>
-                        )}
-                        <p className="text-sm font-semibold text-[#D81E05]">
-                          KES {product.price.toFixed(2)}
-                        </p>
-                      </div>
-                    </div>
-                  </Card>
-                </Link>
+                <ProductCard product={product} className="h-full" />
               </CarouselItem>
             ))}
           </CarouselContent>

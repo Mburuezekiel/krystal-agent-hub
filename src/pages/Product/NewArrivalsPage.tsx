@@ -4,6 +4,7 @@ import { getNewArrivals, Product } from '@/services/product-service';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Star, Loader2, AlertCircle } from 'lucide-react';
+import { ProductCard } from '@/components/common/ProductCard';
 
 // Define price ranges
 const PRICE_RANGES = [
@@ -303,43 +304,9 @@ const NewArrivalsPage: React.FC = () => {
               </Button>
             </div>
           ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 items-stretch"> {/* Added items-stretch */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 items-stretch">
               {sortedAndFilteredNewArrivals.map((product) => (
-                <Link to={`/product/${product._id}`} key={product._id} className="group block flex flex-col"> {/* Added flex flex-col */}
-                  <Card className="rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow duration-200 bg-white flex flex-col h-full"> {/* Added flex flex-col h-full */}
-                    <CardContent className="p-0 flex-grow-0"> {/* flex-grow-0 to prevent image area from expanding */}
-                      <div className="relative w-full h-32 sm:h-40 aspect-square bg-gray-100 overflow-hidden">
-                        <img
-                          src={product.imageUrl}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                          onError={(e) => {
-                            e.currentTarget.src = `https://placehold.co/128x128/E0E0E0/666666?text=Image+Error`;
-                            e.currentTarget.onerror = null;
-                          }}
-                        />
-                        {product.isNew && (
-                          <span className="absolute top-2 left-2 bg-[#D81E05] text-white text-[0.6rem] px-1 py-0.5 rounded-full font-semibold z-10">NEW</span>
-                        )}
-                      </div>
-                    </CardContent>
-                    <div className="p-2 text-center flex-grow flex flex-col justify-between min-h-[5rem] sm:min-h-[6rem]"> {/* Added flex-grow, flex-col, justify-between, and min-h */}
-                        <h3 className="text-xs sm:text-sm font-medium text-[#222222] mb-0.5 line-clamp-2">
-                          {product.name}
-                        </h3>
-                        <div className="flex items-center justify-center gap-1 mt-auto"> {/* Added mt-auto to push to bottom */}
-                          {product.oldPrice && (
-                            <p className="text-[0.6rem] text-gray-500 line-through">
-                              KES {product.oldPrice.toFixed(2)}
-                            </p>
-                          )}
-                          <p className="text-sm font-semibold text-[#D81E05]">
-                            KES {product.price.toFixed(2)}
-                          </p>
-                        </div>
-                      </div>
-                  </Card>
-                </Link>
+                <ProductCard key={product._id} product={product} />
               ))}
             </div>
           )}
