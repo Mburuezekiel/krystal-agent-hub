@@ -22,6 +22,7 @@ interface DetailedProduct extends Product {
   stock: number;
   rating: number;
   numReviews: number;
+  tags:string;
   images: string[];
   specifications: { [key: string]: string };
   oldPrice?: number;
@@ -321,7 +322,8 @@ const ProductDetailPage: React.FC = () => {
           <p className="text-gray-700 text-sm mb-6">
             <span className="font-semibold">Category:</span> {product.category}
           </p>
-
+          
+            
           <div className="flex items-center gap-4 mb-6">
             <label htmlFor="quantity" className="text-lg font-semibold text-[#222222]">Quantity:</label>
             <div className="flex items-center border border-gray-300 rounded-md">

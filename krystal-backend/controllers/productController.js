@@ -62,7 +62,7 @@ const getProducts = asyncHandler(async (req, res) => {
     ? {
         name: {
           $regex: req.query.keyword,
-          $options: 'i', // Case-insensitive search
+          $options: 'i', 
         },
       }
     : {};
@@ -245,7 +245,7 @@ const updateProduct = asyncHandler(async (req, res) => {
     product.stock = stock !== undefined ? stock : product.stock;
     product.rating = rating !== undefined ? rating : product.rating;
     product.numReviews = numReviews !== undefined ? numReviews : product.numReviews;
-    product.images = images && images.length > 0 ? images : product.images; // Update images if new array provided
+    product.images = images && images.length > 0 ? images : product.images; 
     product.specifications = specifications !== undefined ? specifications : product.specifications;
     product.sku = sku !== undefined ? sku : product.sku;
     product.tags = tags !== undefined ? tags : product.tags;

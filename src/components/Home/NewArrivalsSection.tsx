@@ -1,15 +1,17 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import React, { useEffect, useState, memo } from 'react'; // Import memo
+
+import React, { useEffect, useState, memo } from 'react'; 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-// Assuming ProductCard is correctly imported and itself uses memo or manages its state well
+
 import { ProductCard } from '@/components/common/ProductCard';
 import { getNewArrivals, Product } from '@/services/product-service';
 import { useNetworkStatus } from '@/hooks/useNetworkStatus';
 import { Loader2, AlertCircle, WifiOff } from 'lucide-react';
 
-// Memoize the ProductCard component if it's not already memoized internally.
-// This is crucial for preventing unnecessary re-renders of sibling cards.
+
+
 const MemoizedProductCard = memo(ProductCard);
 
 const NewArrivalsSection: React.FC = () => {
@@ -22,7 +24,7 @@ const NewArrivalsSection: React.FC = () => {
     try {
       setLoading(true);
       setError(null);
-      // Fetch only 6 products initially as per current logic
+      
       const data = await getNewArrivals(6);
       setNewArrivals(data);
     } catch (err: any) {
@@ -30,7 +32,7 @@ const NewArrivalsSection: React.FC = () => {
       if (!isOnline) {
         setError('You are offline. Please check your internet connection.');
       } else {
-        // Use a more generic error message if the specific error is not user-friendly
+        
         setError("Could not load new arrivals. Please try again later.");
       }
     } finally {
@@ -38,18 +40,18 @@ const NewArrivalsSection: React.FC = () => {
     }
   };
 
-  // Effect to fetch products on initial mount
+  
   useEffect(() => {
     fetchNewArrivals();
-  }, []); // Empty dependency array means this runs once on mount
+  }, []); 
 
-  // Effect to re-fetch when coming back online
+  
   useEffect(() => {
     if (isOnline && wasOffline && error) {
-      // Only re-fetch if there was a previous error due to being offline
+      
       fetchNewArrivals();
     }
-  }, [isOnline, wasOffline, error]); // Depend on network status and error state
+  }, [isOnline, wasOffline, error]); 
 
   if (loading) {
     return (

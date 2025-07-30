@@ -47,7 +47,7 @@ const Textarea = ({ id, label, register, error, rows = 5, className = '' }: any)
   </div>
 );
 
-// Custom Button component using Tailwind CSS
+
 const Button = ({ children, type = 'button', className = '', onClick }: any) => (
   <button
     type={type}
