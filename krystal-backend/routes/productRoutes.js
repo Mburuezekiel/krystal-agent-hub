@@ -12,7 +12,7 @@ import {
     getPersonalizedRecommendations,
     uploadProductImage,
 } from '../controllers/productController.js';
-import { protect, admin, agent } from '../middleware/authMiddleware.js';
+import { protect, admin, agent } from '../middleware/authMiddleware.js'; // Ensure protect is imported
 
 router.route('/recommendations')
     .get(getPersonalizedRecommendations);
@@ -20,13 +20,15 @@ router.route('/recommendations')
 // Public/Customer facing route - only approved & active products
 router.route('/').get(getProducts);
 
-// Route for agents to create products (their own products will be shown via '/api/products?agent=true' or similar)
+// Route for agents to create products
 router.route('/').post(protect, agent, createProduct);
 
 // ADMIN-SPECIFIC ENDPOINT to get ALL products with various statuses
 // This route should come before general :id routes to avoid conflicts
-router.route('/agent').get( protect,agent, getAgentProducts);
-router.route('/admin').get( admin, getProductsForAdmin);
+router.route('/agent').get( protect, agent, getAgentProducts);
+
+// ****** THIS IS THE CRITICAL CHANGE ******
+router.route('/admin').get(protect, admin, getProductsForAdmin); // Add 'protect' middleware here
 
 router.route('/:id').get(getProductById);
 router.route('/:id').put(protect, agent, updateProduct).delete(protect, agent, deleteProduct);
