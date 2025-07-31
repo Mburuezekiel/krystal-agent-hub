@@ -27,6 +27,7 @@ const activitySchema = new mongoose.Schema({
       'earnings_paid',
       'agent_login',
       'agent_profile_update',
+      'user_login',
       'user_registered',
       'user_purchased',
       'user_message_sent', // Example: a user (customer) sent a message
