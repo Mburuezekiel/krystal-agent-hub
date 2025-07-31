@@ -29,7 +29,8 @@ const app = express();
 // Use an environment variable for deployment (e.g., on Render)
 const allowedOrigins = [
   'http://localhost:8081', // Your local React dev server from the screenshot
-  'http://localhost:3000', // Common alternative for React dev server
+  'http://localhost:3000',
+  'https://krystalagenthub.vercel.app', // Common alternative for React dev server
   process.env.FRONTEND_URL, // Your deployed frontend URL on Render (e.g., https://your-frontend-app.onrender.com)
 ].filter(Boolean); // Filter out any undefined/null values if env var is not set
 
