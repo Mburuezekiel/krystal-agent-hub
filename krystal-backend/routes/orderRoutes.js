@@ -15,7 +15,7 @@ router.route('/all')
   .get(protect, admin, getAllOrders);
 
 // Route to get a specific order by ID (if it exists)
-router.route('/:id')
-  .get(protect, getOrderById); // Assuming getOrderById is also in your controller
+//router.route('/:id')
+  //.get(protect, getOrderById);  Assuming getOrderById is also in your controller
 
 export default router;
