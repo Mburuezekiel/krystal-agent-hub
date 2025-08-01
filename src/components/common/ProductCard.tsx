@@ -122,11 +122,11 @@ export const ProductCard: React.FC<ProductCardProps> = memo(({ product, classNam
               <h3 className="font-semibold text-gray-800 text-sm md:text-base mb-1 line-clamp-2 min-h-[2.5rem]"> {/* Added min-h to prevent layout shift */}
                 {product.name}
               </h3>
-              {product.brand && ( // Only show brand if it exists
-                <p className="text-gray-600 text-xs mb-2 line-clamp-1 min-h-[1rem]"> {/* Added min-h */}
+              {/* {product.brand && (
+                <p className="text-gray-600 text-xs mb-2 line-clamp-1 min-h-[1rem]">
                   {product.brand}
                 </p>
-              )}
+              )} */}
               
               {/* Rating */}
               <div className="flex items-center gap-1 mb-2">

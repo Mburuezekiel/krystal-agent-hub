@@ -17,6 +17,9 @@ import cartRoutes from './routes/cartRoutes.js';
 import wishlistRoutes from './routes/wishlistRoutes.js';
 import notificationRoutes from './routes/notificationRoutes.js';
 import activityRoutes from './routes/activityRoutes.js';
+import orderRoutes from './routes/orderRoutes.js';
+
+
 
 const PORT = process.env.PORT || 5000;
 
@@ -65,6 +68,7 @@ app.use('/api/cart', cartRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/activities', activityRoutes);
+app.use('/api/orders', orderRoutes);
 
 // Basic route for testing server
 app.get('/', (req, res) => {

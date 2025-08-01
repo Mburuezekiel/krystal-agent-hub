@@ -2,7 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { toast } from 'sonner';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://krystal-agent-hub.onrender.com/api';
 
 export const useRefreshToken = () => {
   const { logout } = useAuth();

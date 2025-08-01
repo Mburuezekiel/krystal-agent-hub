@@ -22,12 +22,28 @@ const OrdersPage: React.FC = () => {
       setError(null);
       const userOrders = await getUserOrders();
       setOrders(userOrders);
+      if (wasOffline && isOnline) {
+        toast.success("You're back online! Orders have been reloaded.");
+      }
     } catch (err: any) {
       console.error('Failed to fetch orders:', err);
-      if (!isOnline) {
-        setError('You are offline. Please check your internet connection.');
+      const errorMessage = err.message || 'Failed to load orders. Please try again.';
+
+      // Check for the specific "no orders found" message from the backend
+      if (errorMessage.includes('No orders found') || errorMessage.includes('not placed any orders')) {
+        setOrders([]);
+        setError(null); // Clear the error state to show the "No Orders Yet" card
+        toast.info(errorMessage);
+      } else if (err.name === 'AbortError' || !isOnline) {
+        setError('Network connection lost. Please check your internet connection.');
+        toast.error('You are offline. Orders could not be loaded.', {
+          icon: <WifiOff />,
+        });
       } else {
-        setError(err.message || 'Failed to load orders. Please try again later.');
+        // This will be the message thrown by ordersService.ts,
+        // which contains the backend's error message.
+        setError(errorMessage);
+        toast.error(errorMessage || 'An error occurred while fetching your orders.');
       }
     } finally {
       setLoading(false);
@@ -35,12 +51,15 @@ const OrdersPage: React.FC = () => {
   };
 
   useEffect(() => {
+    // Only fetch orders if the user is logged in
     if (isLoggedIn) {
       fetchOrders();
     }
   }, [isLoggedIn]);
 
   useEffect(() => {
+    // Automatically retry fetching orders when coming back online
+    // only if there was a previous error.
     if (isOnline && wasOffline && error) {
       fetchOrders();
     }

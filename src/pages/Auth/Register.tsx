@@ -62,7 +62,7 @@ const RegisterPage: React.FC = () => {
     setLoading(true);
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/register",
+        "https://krystal-agent-hub.onrender.com/api/auth/register",
         {
           method: "POST",
           headers: {

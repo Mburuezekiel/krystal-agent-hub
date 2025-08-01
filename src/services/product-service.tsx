@@ -47,9 +47,9 @@ export const ALL_CATEGORIES = [
   "Automotive",
 ];
 
-const API_URL = "http://localhost:5000/api/products";
-const CART_API_URL = "http://localhost:5000/api/cart";
-const WISHLIST_API_URL = "http://localhost:5000/api/wishlist";
+const API_URL = "https://krystal-agent-hub.onrender.com/api/products";
+const CART_API_URL = "https://krystal-agent-hub.onrender.com/api/cart";
+const WISHLIST_API_URL = "https://krystal-agent-hub.onrender.com/api/wishlist";
 
 const getProductsArrayFromResponse = (responseData: any): Product[] => {
   if (responseData && Array.isArray(responseData.products)) {

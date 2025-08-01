@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://krystal-agent-hub.onrender.com/api';
 
 export interface Order {
   _id: string;
@@ -48,7 +48,7 @@ export const getUserOrders = async (): Promise<Order[]> => {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/orders/my-orders`, {
+    const response = await fetch(`${API_BASE_URL}/orders`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',

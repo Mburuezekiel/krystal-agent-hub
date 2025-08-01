@@ -26,7 +26,7 @@ const ForgotPasswordPage: React.FC = () => {
   const onSubmit = async (data: ForgotPasswordFormValues) => {
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/forgotpassword",
+        "https://krystal-agent-hub.onrender.com/api/auth/forgotpassword",
         {
           method: "POST",
           headers: {
