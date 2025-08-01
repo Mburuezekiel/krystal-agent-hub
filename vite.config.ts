@@ -8,7 +8,7 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
-    port: 8082,
+    port: 8080,
   },
   plugins: [
     react(),
@@ -21,26 +21,41 @@ export default defineConfig(({ mode }) => ({
         maximumFileSizeToCacheInBytes: 3 * 1024 * 1024 // 3MB
       },
       manifest: {
-        name: 'Krystal Traders',
-        short_name: 'Krystal',
-        description: 'Your premium shopping destination',
+        name: 'KRYSTAL - Premium Shopping Experience',
+        short_name: 'KRYSTAL',
+        description: 'Your premium shopping destination - Discover luxury products and exclusive deals',
         theme_color: '#D81E05',
         background_color: '#ffffff',
         display: 'standalone',
         orientation: 'portrait',
         start_url: '/',
+        categories: ['shopping', 'lifestyle', 'business'],
+        lang: 'en',
+        dir: 'ltr',
         icons: [
           {
-            src: '/pwa-192x192.png',
+            src: '/pwa-logo-192.png',
             sizes: '192x192',
             type: 'image/png',
             purpose: 'any maskable'
           },
           {
-            src: '/pwa-512x512.png',
+            src: '/pwa-logo-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'any maskable'
+          },
+          {
+            src: '/pwa-192x192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: '/pwa-512x512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any'
           }
         ]
       }

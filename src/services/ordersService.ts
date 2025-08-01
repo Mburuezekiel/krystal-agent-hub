@@ -1,4 +1,4 @@
-const API_BASE_URL = 'https://krystal-agent-hub.onrender.com/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 export interface Order {
   _id: string;
@@ -99,6 +99,40 @@ export const getOrderById = async (orderId: string): Promise<Order> => {
     return data.order || data;
   } catch (error) {
     console.error('Error fetching order details:', error);
+    throw error;
+  }
+};
+
+/**
+ * Fetches recent user orders with a limit.
+ * @param {number} limit The maximum number of orders to return.
+ * @returns {Promise<Order[]>} A promise that resolves with the user's recent orders.
+ * @throws {Error} If the fetch request fails or the response indicates an error.
+ */
+export const getRecentOrders = async (limit: number = 5): Promise<Order[]> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('No authentication token found. Please log in.');
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/orders/my-orders?limit=${limit}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Failed to fetch recent orders.');
+    }
+
+    return data.orders || data || [];
+  } catch (error) {
+    console.error('Error fetching recent orders:', error);
     throw error;
   }
 };

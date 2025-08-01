@@ -9,6 +9,9 @@ import { AuthProvider } from "./context/AuthContext";
 import { CartProvider } from "./context/CartContext";
 import { WishlistProvider } from "./context/WishlistContext";
 import { useRefreshToken } from "./hooks/useRefreshToken";
+import { useNetworkStatus } from "./hooks/useNetworkStatus";
+import { GlobalLoaderProvider } from "./providers/GlobalLoaderProvider";
+import { OfflineMode, OfflineFallback } from "./components/ui/offline-mode";
 
 import Header from "./components/layout/Header";
 import Footer from "./components/layout/Footer";
@@ -56,10 +59,16 @@ const ScrollToTopOnNavigate = () => {
 
 const AppContent = () => {
   useRefreshToken(); // Initialize refresh token logic
+  const { isOnline, wasOffline } = useNetworkStatus();
+
+  if (!isOnline && wasOffline) {
+    return <OfflineFallback />;
+  }
 
   return (
     <>
       <ScrollToTopOnNavigate />
+      <OfflineMode isOffline={!isOnline} onRetry={() => window.location.reload()} />
       <Header />
       <Routes>
         <Route path="/" element={<HomePage />} />
@@ -97,17 +106,19 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <AuthProvider>
-        <CartProvider>
-          <WishlistProvider>
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
-          </WishlistProvider>
-        </CartProvider>
-      </AuthProvider>
+      <GlobalLoaderProvider>
+        <Toaster />
+        <Sonner />
+        <AuthProvider>
+          <CartProvider>
+            <WishlistProvider>
+              <BrowserRouter>
+                <AppContent />
+              </BrowserRouter>
+            </WishlistProvider>
+          </CartProvider>
+        </AuthProvider>
+      </GlobalLoaderProvider>
     </TooltipProvider>
   </QueryClientProvider>
 );
