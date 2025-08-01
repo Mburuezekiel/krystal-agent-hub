@@ -157,7 +157,7 @@ const Header: React.FC = () => {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-x-6 gap-y-3">
                     {mainCategories.map(category => (
                       <DropdownMenuItem asChild key={category} className="p-0 focus:bg-transparent">
-                        <Link to={`/category/${encodeURIComponent(category)}`} className="block px-3 py-2 rounded-md text-base hover:bg-[#D81E05] hover:text-white transition-colors">
+                        <Link to={`/category/${encodeURIComponent(category)}`} className="block px-3 py-2 rounded-md text-base hover:bg-red-600 hover:text-white transition-colors">
                           {category}
                         </Link>
                       </DropdownMenuItem>

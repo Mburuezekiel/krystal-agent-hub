@@ -37,6 +37,7 @@ import PrivacyPolicyPage from "./pages/policies/PrivacyPolicyPage";
 import TermsOfServicePage from "./pages/policies/TermsOfServicePage";
 import NotFoundPage from "./pages/NotFound";
 import CategoryListPage from "./pages/Product/CategoryList";
+import OrdersPage from "./pages/Orders/OrdersPage";
 
 const queryClient = new QueryClient();
 
@@ -76,8 +77,9 @@ const AppContent = () => {
         <Route path="/wishlist" element={<WishlistPage />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/cart/checkout" element={<CheckoutPage />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/faq" element={<FAQPage />} />
+            <Route path="/contact" element={<ContactPage />} />
+            <Route path="/faq" element={<FAQPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
         <Route path="/shipping" element={<ShippingPage />} />
         <Route path="/returns" element={<ReturnsPage />} />
         <Route path="/size-guide" element={<SizeGuidePage />} />

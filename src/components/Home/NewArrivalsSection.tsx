@@ -106,9 +106,20 @@ const NewArrivalsSection: React.FC = () => {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4"> {/* Adjusted grid for more responsiveness */}
-            {newArrivals.map((product) => (
-              <MemoizedProductCard key={product._id} product={product} /> 
+          <div className="grid grid-cols-3 gap-4 overflow-x-auto"> {/* 3 products visible per row, 2 rows */}
+            {newArrivals.slice(0, 6).map((product) => (
+              <div key={product._id} className="flex-shrink-0 min-w-0">
+                <div className="group cursor-pointer">
+                  <div className="aspect-square overflow-hidden rounded-lg bg-gray-100 mb-2">
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-full w-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+                    />
+                  </div>
+                  <h3 className="text-sm font-medium text-gray-900 line-clamp-2">{product.name}</h3>
+                </div>
+              </div>
             ))}
           </div>
         )}

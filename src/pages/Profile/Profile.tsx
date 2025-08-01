@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 
 import { useAuth } from '@/context/AuthContext';
 import { getUserProfile, updateUserProfile } from '@/services/userService';
+import { getUserOrders, Order } from '@/services/ordersService';
 
 // --- Zod Schema for Profile Validation (Password fields removed) ---
 const profileSchema = z.object({
@@ -30,12 +31,6 @@ const profileSchema = z.object({
 
 type ProfileFormValues = z.infer<typeof profileSchema>;
 
-// Dummy data for demonstration. In a real application, this would be fetched from an API.
-const dummyOrders = [
-  { id: 'ORD001', date: '2024-07-15', total: 12500, status: 'Delivered', items: 3 },
-  { id: 'ORD002', date: '2024-07-20', total: 8500, status: 'Processing', items: 2 },
-  { id: 'ORD003', date: '2024-07-22', total: 3200, status: 'Shipped', items: 1 },
-];
 
 const ProfilePage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,7 +40,8 @@ const ProfilePage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditingProfile, setIsEditingProfile] = useState(false);
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // State for mobile menu visibility
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
 
   const { register, handleSubmit, formState: { errors, isSubmitting }, reset } = useForm<ProfileFormValues>({
     resolver: zodResolver(profileSchema),
@@ -59,6 +55,15 @@ const ProfilePage: React.FC = () => {
       setError(null);
       const userProfileData = await getUserProfile();
       setProfile(userProfileData);
+
+      // Fetch recent orders
+      try {
+        const orders = await getUserOrders();
+        setRecentOrders(orders.slice(0, 5)); // Get last 5 orders
+      } catch (orderErr) {
+        console.error('Failed to fetch recent orders:', orderErr);
+        // Don't set error for orders, just log it
+      }
 
       // Initialize form fields with fetched data
       reset({
@@ -339,47 +344,51 @@ const ProfilePage: React.FC = () => {
             )}
           </section>
 
-          {/* Order History Section */}
+          {/* Recent Orders Section */}
           <section className="bg-white p-6 rounded-lg shadow-md border border-gray-100">
-            <h2 className="text-xl md:text-2xl font-semibold mb-6 border-b pb-4 text-[#222222]">Order History</h2>
-            {dummyOrders.length === 0 ? (
-              <p className="text-gray-600 text-center py-4">You haven't placed any orders yet.</p>
+            <div className="flex justify-between items-center mb-6 border-b pb-4">
+              <h2 className="text-xl md:text-2xl font-semibold text-[#222222]">Recent Orders</h2>
+              <Button variant="outline" asChild className="border-[#D81E05] text-[#D81E05] hover:bg-[#D81E05] hover:text-white">
+                <Link to="/orders">View All Orders</Link>
+              </Button>
+            </div>
+            {recentOrders.length === 0 ? (
+              <div className="text-center py-8">
+                <Package className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <p className="text-gray-600 mb-4">You haven't placed any orders yet.</p>
+                <Button asChild className="bg-[#D81E05] hover:bg-[#A01A04] text-white">
+                  <Link to="/">Start Shopping</Link>
+                </Button>
+              </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full bg-white border border-gray-200 rounded-lg">
-                  <thead className="bg-gray-100">
-                    <tr className="text-left text-sm font-semibold text-gray-700">
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Order ID</th>
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Date</th>
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Total</th>
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Status</th>
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Items</th>
-                      <th className="py-3 px-4 border-b whitespace-nowrap">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {dummyOrders.map(order => (
-                      <tr key={order.id} className="hover:bg-gray-50 text-sm">
-                        <td className="py-3 px-4 border-b whitespace-nowrap">{order.id}</td>
-                        <td className="py-3 px-4 border-b whitespace-nowrap">{order.date}</td>
-                        <td className="py-3 px-4 border-b whitespace-nowrap">KES {order.total.toFixed(2)}</td>
-                        <td className="py-3 px-4 border-b whitespace-nowrap">
-                          <span className={`px-2 py-1 rounded-full text-xs font-semibold
-                            ${order.status === 'Delivered' ? 'bg-green-100 text-green-800' : ''}
-                            ${order.status === 'Processing' ? 'bg-yellow-100 text-yellow-800' : ''}
-                            ${order.status === 'Shipped' ? 'bg-blue-100 text-blue-800' : ''}
-                          `}>
-                            {order.status}
-                          </span>
-                        </td>
-                        <td className="py-3 px-4 border-b">{order.items}</td>
-                        <td className="py-3 px-4 border-b">
-                          <Button variant="link" className="text-[#D81E05] hover:underline p-0 h-auto">View Details</Button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+              <div className="space-y-4">
+                {recentOrders.map(order => (
+                  <div key={order._id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div className="flex justify-between items-start mb-3">
+                      <div>
+                        <p className="font-semibold text-gray-800">Order #{order.orderNumber || order._id.slice(-8)}</p>
+                        <p className="text-sm text-gray-600">{new Date(order.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <span className={`px-2 py-1 rounded-full text-xs font-semibold
+                        ${order.status === 'delivered' ? 'bg-green-100 text-green-800' : ''}
+                        ${order.status === 'processing' ? 'bg-yellow-100 text-yellow-800' : ''}
+                        ${order.status === 'shipped' ? 'bg-blue-100 text-blue-800' : ''}
+                        ${order.status === 'pending' ? 'bg-gray-100 text-gray-800' : ''}
+                        ${order.status === 'cancelled' ? 'bg-red-100 text-red-800' : ''}
+                      `}>
+                        {order.status.charAt(0).toUpperCase() + order.status.slice(1)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <div className="text-sm text-gray-600">
+                        <p>{order.items.length} item{order.items.length !== 1 ? 's' : ''} • KES {order.totalAmount.toFixed(2)}</p>
+                      </div>
+                      <Button variant="link" className="text-[#D81E05] hover:underline p-0 h-auto" asChild>
+                        <Link to={`/orders/${order._id}`}>View Details</Link>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </section>
